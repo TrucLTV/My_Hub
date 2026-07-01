@@ -25,17 +25,16 @@ create table resources (
 alter table notes enable row level security;
 alter table resources enable row level security;
 
--- Thay 'ADMIN_UID' bang User UID lay tu Authentication > Users truoc khi chay
 create policy "public_read" on notes
   for select using (is_public = true);
 
 create policy "admin_full_access" on notes
-  for all using (auth.uid() = 'ADMIN_UID')
-  with check (auth.uid() = 'ADMIN_UID');
+  for all using (auth.uid() = 'f247e9f1-5c1b-4284-b069-c279f0bb1d74')
+  with check (auth.uid() = 'f247e9f1-5c1b-4284-b069-c279f0bb1d74');
 
 create policy "public_read" on resources
   for select using (is_public = true);
 
 create policy "admin_full_access" on resources
-  for all using (auth.uid() = 'ADMIN_UID')
-  with check (auth.uid() = 'ADMIN_UID');
+  for all using (auth.uid() = 'f247e9f1-5c1b-4284-b069-c279f0bb1d74')
+  with check (auth.uid() = 'f247e9f1-5c1b-4284-b069-c279f0bb1d74');

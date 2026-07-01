@@ -81,8 +81,8 @@ export default function AdminResources() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Quản lý tài nguyên</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate}>+ Tài nguyên mới</Button>
+          <DialogTrigger render={<Button onClick={openCreate} />}>
+            + Tài nguyên mới
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

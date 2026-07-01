@@ -74,8 +74,8 @@ export default function AdminNotes() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Quản lý ghi chú</h1>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate}>+ Ghi chú mới</Button>
+          <DialogTrigger render={<Button onClick={openCreate} />}>
+            + Ghi chú mới
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
