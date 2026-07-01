@@ -8,6 +8,8 @@ export default function Layout() {
           <Link to="/" className="font-semibold">MyHub</Link>
           <Link to="/ghi-chu">Ghi chú</Link>
           <Link to="/tai-nguyen">Tài nguyên</Link>
+          <Link to="/phim-game">Phim/Game</Link>
+          <Link to="/tai-lieu">Tài liệu</Link>
         </nav>
       </header>
       <main className="flex-1 max-w-3xl w-full mx-auto p-4">

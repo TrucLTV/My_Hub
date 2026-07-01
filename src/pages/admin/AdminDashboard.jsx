@@ -14,6 +14,8 @@ export default function AdminDashboard() {
           <div className="flex gap-4">
             <Link to="/admin/ghi-chu">Ghi chú</Link>
             <Link to="/admin/tai-nguyen">Tài nguyên</Link>
+            <Link to="/admin/phim-game">Phim/Game</Link>
+            <Link to="/admin/tai-lieu">Tài liệu</Link>
           </div>
           <Button variant="outline" size="sm" onClick={signOut}>Đăng xuất</Button>
         </nav>
