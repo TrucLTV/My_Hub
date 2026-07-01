@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchPublicDocuments, getDocumentSignedUrl } from '@/lib/queries/documents'
-import { useFilteredList } from '@/hooks/useFilteredList'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useTagFilter } from '@/hooks/useTagFilter'
 import ContentCard from '@/components/ContentCard'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
@@ -12,14 +14,13 @@ async function handleDownload(path) {
 }
 
 export default function DocumentsPublic() {
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
   const { data: documents, isLoading, error } = useQuery({
-    queryKey: ['documents', 'public'],
-    queryFn: fetchPublicDocuments,
+    queryKey: ['documents', 'public', debouncedSearch],
+    queryFn: () => fetchPublicDocuments(debouncedSearch),
   })
-  const { search, setSearch, allTags, selectedTags, toggleTag, filtered } = useFilteredList(
-    documents,
-    ['title', 'description', 'subject']
-  )
+  const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(documents)
 
   if (isLoading) return <p>Đang tải...</p>
   if (error) return <p className="text-destructive">Lỗi: {error.message}</p>

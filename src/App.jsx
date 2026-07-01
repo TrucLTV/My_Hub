@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
+import { useThemeStore } from '@/store/themeStore'
 import Layout from '@/components/Layout'
 import Home from '@/pages/Home'
 import NotesPublic from '@/pages/NotesPublic'
@@ -14,6 +16,12 @@ import AdminMedia from '@/pages/admin/AdminMedia'
 import AdminDocuments from '@/pages/admin/AdminDocuments'
 
 export default function App() {
+  const theme = useThemeStore((s) => s.theme)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
   return (
     <Routes>
       <Route element={<Layout />}>

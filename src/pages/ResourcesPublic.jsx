@@ -1,19 +1,20 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchPublicResources } from '@/lib/queries/resources'
-import { useFilteredList } from '@/hooks/useFilteredList'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useTagFilter } from '@/hooks/useTagFilter'
 import ContentCard from '@/components/ContentCard'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 
 export default function ResourcesPublic() {
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
   const { data: resources, isLoading, error } = useQuery({
-    queryKey: ['resources', 'public'],
-    queryFn: fetchPublicResources,
+    queryKey: ['resources', 'public', debouncedSearch],
+    queryFn: () => fetchPublicResources(debouncedSearch),
   })
-  const { search, setSearch, allTags, selectedTags, toggleTag, filtered } = useFilteredList(
-    resources,
-    ['title', 'description']
-  )
+  const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(resources)
 
   if (isLoading) return <p>Đang tải...</p>
   if (error) return <p className="text-destructive">Lỗi: {error.message}</p>

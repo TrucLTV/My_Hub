@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabaseClient'
 
-export async function fetchPublicDocuments() {
-  const { data, error } = await supabase
-    .from('documents')
-    .select('*')
-    .eq('is_public', true)
-    .order('created_at', { ascending: false })
+export async function fetchPublicDocuments(search = '') {
+  let query = supabase.from('documents').select('*').eq('is_public', true)
+  if (search.trim()) {
+    query = query.textSearch('search_vector', search, { type: 'websearch', config: 'simple' })
+  }
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
   return data
 }

@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { fetchPublicMedia } from '@/lib/queries/media'
-import { useFilteredList } from '@/hooks/useFilteredList'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useTagFilter } from '@/hooks/useTagFilter'
 import { Badge } from '@/components/ui/badge'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
@@ -13,14 +15,13 @@ const statusLabel = {
 }
 
 export default function MediaTracker() {
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
   const { data: items, isLoading, error } = useQuery({
-    queryKey: ['media_tracker', 'public'],
-    queryFn: fetchPublicMedia,
+    queryKey: ['media_tracker', 'public', debouncedSearch],
+    queryFn: () => fetchPublicMedia(debouncedSearch),
   })
-  const { search, setSearch, allTags, selectedTags, toggleTag, filtered } = useFilteredList(
-    items,
-    ['title', 'review']
-  )
+  const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(items)
 
   if (isLoading) return <p>Đang tải...</p>
   if (error) return <p className="text-destructive">Lỗi: {error.message}</p>

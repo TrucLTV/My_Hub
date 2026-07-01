@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabaseClient'
 
-export async function fetchPublicMedia() {
-  const { data, error } = await supabase
-    .from('media_tracker')
-    .select('*')
-    .eq('is_public', true)
-    .order('created_at', { ascending: false })
+export async function fetchPublicMedia(search = '') {
+  let query = supabase.from('media_tracker').select('*').eq('is_public', true)
+  if (search.trim()) {
+    query = query.textSearch('search_vector', search, { type: 'websearch', config: 'simple' })
+  }
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error
   return data
 }

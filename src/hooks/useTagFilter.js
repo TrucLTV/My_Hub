@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 
-export function useFilteredList(items, searchFields) {
-  const [search, setSearch] = useState('')
+export function useTagFilter(items) {
   const [selectedTags, setSelectedTags] = useState([])
 
   const allTags = useMemo(() => {
@@ -21,14 +20,9 @@ export function useFilteredList(items, searchFields) {
   const filtered = useMemo(() => {
     return (items ?? []).filter((item) => {
       const itemTags = item.tags ?? item.genre ?? []
-      const matchesTags = selectedTags.every((tag) => itemTags.includes(tag))
-      const keyword = search.trim().toLowerCase()
-      const matchesSearch =
-        !keyword ||
-        searchFields.some((field) => item[field]?.toLowerCase().includes(keyword))
-      return matchesTags && matchesSearch
+      return selectedTags.every((tag) => itemTags.includes(tag))
     })
-  }, [items, search, selectedTags, searchFields])
+  }, [items, selectedTags])
 
-  return { search, setSearch, allTags, selectedTags, toggleTag, filtered }
+  return { allTags, selectedTags, toggleTag, filtered }
 }

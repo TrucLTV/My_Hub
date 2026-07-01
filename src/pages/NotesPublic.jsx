@@ -1,20 +1,21 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import ReactMarkdown from 'react-markdown'
 import { fetchPublicNotes } from '@/lib/queries/notes'
-import { useFilteredList } from '@/hooks/useFilteredList'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useTagFilter } from '@/hooks/useTagFilter'
 import ContentCard from '@/components/ContentCard'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 
 export default function NotesPublic() {
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
   const { data: notes, isLoading, error } = useQuery({
-    queryKey: ['notes', 'public'],
-    queryFn: fetchPublicNotes,
+    queryKey: ['notes', 'public', debouncedSearch],
+    queryFn: () => fetchPublicNotes(debouncedSearch),
   })
-  const { search, setSearch, allTags, selectedTags, toggleTag, filtered } = useFilteredList(
-    notes,
-    ['title', 'content']
-  )
+  const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(notes)
 
   if (isLoading) return <p>Đang tải...</p>
   if (error) return <p className="text-destructive">Lỗi: {error.message}</p>

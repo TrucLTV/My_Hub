@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function AdminDashboard() {
   const { signOut } = useAuth()
@@ -17,7 +18,10 @@ export default function AdminDashboard() {
             <Link to="/admin/phim-game">Phim/Game</Link>
             <Link to="/admin/tai-lieu">Tài liệu</Link>
           </div>
-          <Button variant="outline" size="sm" onClick={signOut}>Đăng xuất</Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={signOut}>Đăng xuất</Button>
+          </div>
         </nav>
       </header>
       <main className="max-w-3xl mx-auto p-4">
