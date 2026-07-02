@@ -3,7 +3,7 @@ import ThemeToggle from '@/components/ThemeToggle'
 
 export default function Layout() {
   return (
-    <div className="min-h-svh flex flex-col">
+    <div className="min-h-svh flex flex-col overflow-x-hidden">
       <header className="border-b">
         <nav className="max-w-3xl mx-auto flex items-center justify-between gap-4 p-4 text-sm">
           <div className="flex items-center gap-4">

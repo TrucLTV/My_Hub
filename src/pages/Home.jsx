@@ -88,10 +88,10 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
 
 export default function Home() {
   return (
-    <div className="space-y-8">
-      <div className="rounded-2xl bg-zinc-900 px-8 py-12 text-center ring-1 ring-white/10 dark:bg-zinc-950">
-        <h1 className="text-4xl font-semibold tracking-tight text-zinc-50">MyHub</h1>
-        <p className="mx-auto mt-2 max-w-md text-zinc-400">
+    <div className="-mt-4 space-y-8">
+      <div className="relative flex min-h-svh w-screen mx-[calc(50%-50vw)] flex-col items-center justify-center bg-gradient-to-b from-blue-950 via-blue-950 to-slate-950 px-6 text-center">
+        <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl">MyHub</h1>
+        <p className="mx-auto mt-3 max-w-md text-blue-200/70">
           Nơi lưu tài liệu công việc, ghi chú cá nhân, theo dõi phim/game và tài nguyên hữu ích.
         </p>
         <div className="mx-auto mt-6 h-1 w-28 rounded-full bg-gradient-to-r from-sky-500 via-violet-500 to-amber-500" />
