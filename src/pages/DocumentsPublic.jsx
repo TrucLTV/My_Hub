@@ -143,15 +143,17 @@ export default function DocumentsPublic() {
               <SearchBar value={search} onChange={setSearch} placeholder="Tìm tài liệu..." />
               <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
               {!filtered.length && <p className="text-muted-foreground">Chưa có tài liệu nào.</p>}
-              {filtered.map((doc) => (
-                <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT}>
-                  {doc.file_url && (
-                    <Button size="sm" variant="outline" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
-                      Tải xuống ({doc.file_type})
-                    </Button>
-                  )}
-                </ContentCard>
-              ))}
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {filtered.map((doc) => (
+                  <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT}>
+                    {doc.file_url && (
+                      <Button size="sm" variant="outline" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
+                        Tải xuống ({doc.file_type})
+                      </Button>
+                    )}
+                  </ContentCard>
+                ))}
+              </div>
             </div>
           )}
         </div>
