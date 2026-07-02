@@ -11,26 +11,34 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/componen
 const accentClasses = {
   sky: {
     border: 'border-t-sky-500',
+    bg: 'bg-sky-50 dark:bg-sky-950/30',
     iconBg: 'bg-sky-500/10',
     iconText: 'text-sky-600 dark:text-sky-400',
+    hoverShadow: 'hover:shadow-sky-500/25',
     gradient: 'from-sky-500',
   },
   violet: {
     border: 'border-t-violet-500',
+    bg: 'bg-violet-50 dark:bg-violet-950/30',
     iconBg: 'bg-violet-500/10',
     iconText: 'text-violet-600 dark:text-violet-400',
+    hoverShadow: 'hover:shadow-violet-500/25',
     gradient: 'via-violet-500',
   },
   amber: {
     border: 'border-t-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-950/30',
     iconBg: 'bg-amber-500/10',
     iconText: 'text-amber-600 dark:text-amber-400',
+    hoverShadow: 'hover:shadow-amber-500/25',
     gradient: 'via-amber-500',
   },
   emerald: {
     border: 'border-t-emerald-500',
+    bg: 'bg-emerald-50 dark:bg-emerald-950/30',
     iconBg: 'bg-emerald-500/10',
     iconText: 'text-emerald-600 dark:text-emerald-400',
+    hoverShadow: 'hover:shadow-emerald-500/25',
     gradient: 'to-emerald-500',
   },
 }
@@ -48,7 +56,9 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
   const colors = accentClasses[accent]
 
   return (
-    <Card className={`border-t-4 ${colors.border} transition-shadow hover:shadow-md`}>
+    <Card
+      className={`border-t-4 ${colors.border} ${colors.bg} ${colors.hoverShadow} cursor-default transition-all duration-200 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl`}
+    >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <span className={`flex size-8 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>

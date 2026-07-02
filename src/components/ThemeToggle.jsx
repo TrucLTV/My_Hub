@@ -2,12 +2,18 @@ import { Moon, Sun } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useThemeStore } from '@/store/themeStore'
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className }) {
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
 
   return (
-    <Button variant="ghost" size="icon-sm" onClick={toggleTheme} aria-label="Đổi giao diện sáng/tối">
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      onClick={toggleTheme}
+      aria-label="Đổi giao diện sáng/tối"
+      className={className}
+    >
       {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </Button>
   )
