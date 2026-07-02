@@ -48,21 +48,19 @@ function FolderGrid({ entries, onOpen }) {
   const colors = accentClasses[DOC_ACCENT]
   if (!entries.length) return <p className="text-muted-foreground">Chưa có mục nào.</p>
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <div className="flex flex-wrap gap-4">
       {entries.map(({ key, label, count }) => (
         <AccentCard
           key={key}
           accent={DOC_ACCENT}
           onClick={() => onOpen(key)}
-          className="cursor-pointer flex-row items-center gap-3 p-4"
+          className="w-36 cursor-pointer items-center gap-2 p-4 text-center sm:w-40"
         >
-          <span className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
-            <Folder className="size-5" />
+          <span className={`flex size-12 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
+            <Folder className="size-6" />
           </span>
-          <div className="min-w-0">
-            <p className="truncate font-medium text-sm">{label}</p>
-            <p className="text-xs text-muted-foreground">{count} tài liệu</p>
-          </div>
+          <p className="w-full truncate font-medium text-sm">{label}</p>
+          <p className="text-xs text-muted-foreground">{count} tài liệu</p>
         </AccentCard>
       ))}
     </div>
