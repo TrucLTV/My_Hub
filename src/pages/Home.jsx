@@ -57,7 +57,7 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
 
   return (
     <Card
-      className={`border-t-4 ${colors.border} ${colors.bg} ${colors.hoverShadow} cursor-default transition-all duration-200 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl`}
+      className={`w-64 shrink-0 border-t-4 ${colors.border} ${colors.bg} ${colors.hoverShadow} cursor-default transition-all duration-200 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl`}
     >
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
@@ -106,10 +106,14 @@ export default function Home() {
         </p>
         <div className="mx-auto mt-6 h-1 w-28 rounded-full bg-gradient-to-r from-sky-500 via-violet-500 to-amber-500" />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {sections.map(({ key, ...section }) => (
-          <CategoryCard key={key} {...section} />
-        ))}
+      <div className="relative w-screen mx-[calc(50%-50vw)]">
+        <div className="mx-auto max-w-6xl overflow-x-auto px-4 pb-2">
+          <div className="mx-auto flex w-fit gap-4">
+            {sections.map(({ key, ...section }) => (
+              <CategoryCard key={key} {...section} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
