@@ -1,17 +1,20 @@
 import { Link, Outlet } from 'react-router-dom'
 import ThemeToggle from '@/components/ThemeToggle'
 
+const navTabClass =
+  'rounded-lg border border-white/15 px-3 py-1.5 text-blue-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/60 hover:bg-white/5 hover:text-white hover:shadow-lg hover:shadow-orange-500/20'
+
 export default function Layout() {
   return (
     <div className="min-h-svh flex flex-col overflow-x-hidden">
       <header className="bg-blue-950">
         <nav className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 p-4 text-sm sm:text-[1.3125rem]">
-          <div className="flex flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap sm:justify-between sm:gap-6 sm:overflow-visible">
-            <Link to="/" className="font-semibold text-white">MyHub</Link>
-            <Link to="/ghi-chu" className="text-blue-200/80 hover:text-white">Ghi chú</Link>
-            <Link to="/tai-nguyen" className="text-blue-200/80 hover:text-white">Tài nguyên</Link>
-            <Link to="/phim-game" className="text-blue-200/80 hover:text-white">Phim/Game</Link>
-            <Link to="/tai-lieu" className="text-blue-200/80 hover:text-white">Tài liệu</Link>
+          <div className="flex flex-1 items-center gap-2 overflow-x-auto whitespace-nowrap sm:justify-between sm:gap-3 sm:overflow-visible">
+            <Link to="/" className="font-semibold text-white px-2">MyHub</Link>
+            <Link to="/ghi-chu" className={navTabClass}>Ghi chú</Link>
+            <Link to="/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
+            <Link to="/phim-game" className={navTabClass}>Phim/Game</Link>
+            <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
           </div>
           <ThemeToggle className="text-blue-200/80 hover:bg-white/10 hover:text-white" />
         </nav>
