@@ -89,8 +89,8 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
 export default function Home() {
   return (
     <div className="-mt-4 space-y-8">
-      <div className="relative flex min-h-svh w-screen mx-[calc(50%-50vw)] flex-col items-center justify-center bg-gradient-to-b from-blue-950 via-blue-950 to-slate-950 px-6 text-center">
-        <h1 className="text-5xl font-semibold tracking-tight text-white sm:text-6xl">MyHub</h1>
+      <div className="relative flex w-screen mx-[calc(50%-50vw)] flex-col items-center justify-center bg-gradient-to-b from-blue-950 via-blue-950 to-slate-950 px-6 py-16 text-center">
+        <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">MyHub</h1>
         <p className="mx-auto mt-3 max-w-md text-blue-200/70">
           Nơi lưu tài liệu công việc, ghi chú cá nhân, theo dõi phim/game và tài nguyên hữu ích.
         </p>
