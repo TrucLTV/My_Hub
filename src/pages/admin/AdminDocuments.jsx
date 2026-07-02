@@ -255,37 +255,35 @@ export default function AdminDocuments() {
         </Dialog>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {documents.map((doc) => (
-          <div key={doc.id} className="border rounded-md p-3 flex items-start justify-between gap-2">
-            <div>
-              <div className="flex items-center gap-2">
-                {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
-                <p className="font-medium">{doc.title}</p>
-                {doc.is_public ? <Badge>Public</Badge> : <Badge variant="secondary">Private</Badge>}
-              </div>
-              {(doc.category || doc.subject || doc.grade_level || doc.material_type) && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {doc.category && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY, doc.category)}</Badge>}
-                  {doc.subject && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children, doc.subject)}</Badge>}
-                  {doc.grade_level && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children, doc.grade_level)}</Badge>}
-                  {doc.material_type && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children?.[doc.grade_level]?.children, doc.material_type)}</Badge>}
-                </div>
-              )}
-              {doc.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {doc.tags.map((tag) => (
-                    <Badge key={tag} variant="outline">{tag}</Badge>
-                  ))}
-                </div>
-              )}
-              {doc.file_url && (
-                <Button variant="link" size="sm" className="px-0 h-auto" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
-                  Tải xuống ({doc.file_type})
-                </Button>
-              )}
+          <div key={doc.id} className="border rounded-md p-3 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
+              <p className="font-medium">{doc.title}</p>
+              {doc.is_public ? <Badge>Public</Badge> : <Badge variant="secondary">Private</Badge>}
             </div>
-            <div className="flex gap-2 shrink-0">
+            {(doc.category || doc.subject || doc.grade_level || doc.material_type) && (
+              <div className="flex flex-wrap gap-1">
+                {doc.category && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY, doc.category)}</Badge>}
+                {doc.subject && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children, doc.subject)}</Badge>}
+                {doc.grade_level && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children, doc.grade_level)}</Badge>}
+                {doc.material_type && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children?.[doc.grade_level]?.children, doc.material_type)}</Badge>}
+              </div>
+            )}
+            {doc.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {doc.tags.map((tag) => (
+                  <Badge key={tag} variant="outline">{tag}</Badge>
+                ))}
+              </div>
+            )}
+            {doc.file_url && (
+              <Button variant="link" size="sm" className="px-0 h-auto block" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
+                Tải xuống ({doc.file_type})
+              </Button>
+            )}
+            <div className="flex gap-2 pt-1">
               <Button variant="outline" size="sm" onClick={() => openEdit(doc)}>Sửa</Button>
               <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(doc.id)}>Xóa</Button>
             </div>
