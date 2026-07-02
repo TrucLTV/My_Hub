@@ -8,11 +8,13 @@ import {
   uploadDocumentFile,
   getDocumentSignedUrl,
 } from '@/lib/queries/documents'
+import { DOCUMENT_TAXONOMY } from '@/lib/documentTaxonomy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -27,10 +29,15 @@ const emptyForm = {
   category: '',
   subject: '',
   grade_level: '',
+  material_type: '',
   tags: '',
   is_public: false,
   file_url: '',
   file_type: '',
+}
+
+function labelFor(dict, key) {
+  return dict?.[key]?.label ?? key
 }
 
 export default function AdminDocuments() {
@@ -70,6 +77,7 @@ export default function AdminDocuments() {
       category: doc.category ?? '',
       subject: doc.subject ?? '',
       grade_level: doc.grade_level ?? '',
+      material_type: doc.material_type ?? '',
       tags: (doc.tags ?? []).join(', '),
       is_public: doc.is_public,
       file_url: doc.file_url ?? '',
@@ -95,9 +103,10 @@ export default function AdminDocuments() {
     const payload = {
       title: form.title,
       description: form.description,
-      category: form.category,
-      subject: form.subject,
-      grade_level: form.grade_level,
+      category: form.category || null,
+      subject: form.subject || null,
+      grade_level: form.grade_level || null,
+      material_type: form.material_type || null,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
       is_public: form.is_public,
       file_url: fileUrl,
@@ -115,6 +124,10 @@ export default function AdminDocuments() {
     const url = await getDocumentSignedUrl(path)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
+
+  const subjectOptions = form.category ? DOCUMENT_TAXONOMY[form.category]?.children : null
+  const gradeOptions = form.subject ? subjectOptions?.[form.subject]?.children : null
+  const materialOptions = form.grade_level ? gradeOptions?.[form.grade_level]?.children : null
 
   if (isLoading) return <p>Đang tải...</p>
   if (error) return <p className="text-destructive">Lỗi: {error.message}</p>
@@ -140,20 +153,70 @@ export default function AdminDocuments() {
                 <Label htmlFor="description">Mô tả</Label>
                 <Textarea id="description" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label htmlFor="subject">Môn học</Label>
-                  <Input id="subject" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="grade_level">Lớp</Label>
-                  <Input id="grade_level" value={form.grade_level} onChange={(e) => setForm({ ...form, grade_level: e.target.value })} />
-                </div>
-              </div>
+
               <div className="space-y-1">
-                <Label htmlFor="category">Danh mục</Label>
-                <Input id="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="giao_an | giao_trinh | khac" />
+                <Label>Loại</Label>
+                <Select
+                  value={form.category}
+                  onValueChange={(v) => setForm({ ...form, category: v, subject: '', grade_level: '', material_type: '' })}
+                >
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Chọn loại" /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(DOCUMENT_TAXONOMY).map(([key, node]) => (
+                      <SelectItem key={key} value={key}>{node.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              {subjectOptions && (
+                <div className="space-y-1">
+                  <Label>Môn</Label>
+                  <Select
+                    value={form.subject}
+                    onValueChange={(v) => setForm({ ...form, subject: v, grade_level: '', material_type: '' })}
+                  >
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Chọn môn" /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(subjectOptions).map(([key, node]) => (
+                        <SelectItem key={key} value={key}>{node.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {gradeOptions && (
+                <div className="space-y-1">
+                  <Label>Khối</Label>
+                  <Select
+                    value={form.grade_level}
+                    onValueChange={(v) => setForm({ ...form, grade_level: v, material_type: '' })}
+                  >
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Chọn khối" /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(gradeOptions).map(([key, node]) => (
+                        <SelectItem key={key} value={key}>{node.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {materialOptions && (
+                <div className="space-y-1">
+                  <Label>Nhóm tài liệu</Label>
+                  <Select value={form.material_type} onValueChange={(v) => setForm({ ...form, material_type: v })}>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Chọn nhóm" /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(materialOptions).map(([key, node]) => (
+                        <SelectItem key={key} value={key}>{node.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="space-y-1">
                 <Label htmlFor="tags">Tags (cách nhau bởi dấu phẩy)</Label>
                 <Input id="tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
@@ -185,6 +248,14 @@ export default function AdminDocuments() {
                 <p className="font-medium">{doc.title}</p>
                 {doc.is_public ? <Badge>Public</Badge> : <Badge variant="secondary">Private</Badge>}
               </div>
+              {(doc.category || doc.subject || doc.grade_level || doc.material_type) && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {doc.category && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY, doc.category)}</Badge>}
+                  {doc.subject && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children, doc.subject)}</Badge>}
+                  {doc.grade_level && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children, doc.grade_level)}</Badge>}
+                  {doc.material_type && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children?.[doc.grade_level]?.children, doc.material_type)}</Badge>}
+                </div>
+              )}
               {doc.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {doc.tags.map((tag) => (

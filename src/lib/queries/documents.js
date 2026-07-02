@@ -1,7 +1,10 @@
 import { supabase } from '@/lib/supabaseClient'
 
-export async function fetchPublicDocuments(search = '') {
+export async function fetchPublicDocuments(search = '', filters = {}) {
   let query = supabase.from('documents').select('*').eq('is_public', true)
+  for (const [column, value] of Object.entries(filters)) {
+    query = query.eq(column, value)
+  }
   if (search.trim()) {
     query = query.textSearch('search_vector', search, { type: 'websearch', config: 'simple' })
   }
