@@ -51,8 +51,10 @@ export async function uploadDocumentFile(file) {
   return path
 }
 
-export async function getDocumentSignedUrl(path) {
-  const { data, error } = await supabase.storage.from('documents').createSignedUrl(path, 3600)
+export async function getDocumentSignedUrl(path, downloadName) {
+  const { data, error } = await supabase.storage
+    .from('documents')
+    .createSignedUrl(path, 3600, { download: downloadName ?? true })
   if (error) throw error
   return data.signedUrl
 }

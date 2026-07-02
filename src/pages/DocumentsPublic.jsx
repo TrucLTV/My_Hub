@@ -20,8 +20,8 @@ import { Label } from '@/components/ui/label'
 const PATH_PARAMS = ['loai', 'mon', 'khoi', 'nhom']
 const DOC_ACCENT = 'emerald'
 
-async function handleDownload(path) {
-  const url = await getDocumentSignedUrl(path)
+async function handleDownload(path, filename) {
+  const url = await getDocumentSignedUrl(path, filename)
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
@@ -242,7 +242,7 @@ export default function DocumentsPublic() {
               {filtered.map((doc) => (
                 <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT}>
                   {doc.file_url && (
-                    <Button size="sm" variant="outline" onClick={() => handleDownload(doc.file_url)}>
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
                       Tải xuống ({doc.file_type})
                     </Button>
                   )}

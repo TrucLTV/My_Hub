@@ -120,8 +120,8 @@ export default function AdminDocuments() {
     setOpen(false)
   }
 
-  async function handleDownload(path) {
-    const url = await getDocumentSignedUrl(path)
+  async function handleDownload(path, filename) {
+    const url = await getDocumentSignedUrl(path, filename)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -264,7 +264,7 @@ export default function AdminDocuments() {
                 </div>
               )}
               {doc.file_url && (
-                <Button variant="link" size="sm" className="px-0 h-auto" onClick={() => handleDownload(doc.file_url)}>
+                <Button variant="link" size="sm" className="px-0 h-auto" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
                   Tải xuống ({doc.file_type})
                 </Button>
               )}
