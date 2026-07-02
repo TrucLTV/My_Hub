@@ -34,6 +34,7 @@ const emptyForm = {
   is_public: false,
   file_url: '',
   file_type: '',
+  sort_order: '',
 }
 
 function labelFor(dict, key) {
@@ -82,6 +83,7 @@ export default function AdminDocuments() {
       is_public: doc.is_public,
       file_url: doc.file_url ?? '',
       file_type: doc.file_type ?? '',
+      sort_order: doc.sort_order ?? '',
     })
     setFile(null)
     setOpen(true)
@@ -111,6 +113,7 @@ export default function AdminDocuments() {
       is_public: form.is_public,
       file_url: fileUrl,
       file_type: fileType,
+      sort_order: form.sort_order === '' ? null : Number(form.sort_order),
     }
     if (editingId) {
       updateMutation.mutate({ id: editingId, updates: payload })
@@ -145,9 +148,21 @@ export default function AdminDocuments() {
               <DialogTitle>{editingId ? 'Sửa tài liệu' : 'Tài liệu mới'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
-              <div className="space-y-1">
-                <Label htmlFor="title">Tiêu đề</Label>
-                <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2 space-y-1">
+                  <Label htmlFor="title">Tiêu đề</Label>
+                  <Input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="sort_order">Thứ tự</Label>
+                  <Input
+                    id="sort_order"
+                    type="number"
+                    placeholder="1, 2, 3..."
+                    value={form.sort_order}
+                    onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="space-y-1">
                 <Label htmlFor="description">Mô tả</Label>
@@ -245,6 +260,7 @@ export default function AdminDocuments() {
           <div key={doc.id} className="border rounded-md p-3 flex items-start justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
+                {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
                 <p className="font-medium">{doc.title}</p>
                 {doc.is_public ? <Badge>Public</Badge> : <Badge variant="secondary">Private</Badge>}
               </div>

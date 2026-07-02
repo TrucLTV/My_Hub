@@ -8,7 +8,9 @@ export async function fetchPublicDocuments(search = '', filters = {}) {
   if (search.trim()) {
     query = query.textSearch('search_vector', search, { type: 'websearch', config: 'simple' })
   }
-  const { data, error } = await query.order('created_at', { ascending: false })
+  const { data, error } = await query
+    .order('sort_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false })
   if (error) throw error
   return data
 }
@@ -17,6 +19,7 @@ export async function fetchAllDocuments() {
   const { data, error } = await supabase
     .from('documents')
     .select('*')
+    .order('sort_order', { ascending: true, nullsFirst: false })
     .order('created_at', { ascending: false })
   if (error) throw error
   return data
