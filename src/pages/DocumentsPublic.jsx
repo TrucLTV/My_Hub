@@ -44,11 +44,22 @@ function Breadcrumb({ path, nodes, onNavigate }) {
   )
 }
 
+function DecorativeBackground({ accent }) {
+  const colors = accentClasses[accent]
+  return (
+    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+      <div className={`absolute -top-16 -left-16 size-72 rounded-full bg-gradient-to-br ${colors.gradient} to-transparent opacity-20 blur-3xl`} />
+      <div className="absolute top-10 right-0 size-96 rounded-full bg-gradient-to-br from-violet-500 to-transparent opacity-10 blur-3xl" />
+      <Folder className={`absolute -right-8 top-4 size-56 ${colors.iconText} opacity-[0.06]`} strokeWidth={1} />
+    </div>
+  )
+}
+
 function FolderGrid({ entries, onOpen }) {
   const colors = accentClasses[DOC_ACCENT]
   if (!entries.length) return <p className="text-muted-foreground">Chưa có mục nào.</p>
   return (
-    <div className="flex flex-wrap gap-4">
+    <div className="flex flex-wrap justify-center gap-4 py-6">
       {entries.map(({ key, label, count }) => (
         <AccentCard
           key={key}
@@ -112,7 +123,8 @@ export default function DocumentsPublic() {
       {isLoading && <p>Đang tải...</p>}
       {error && <p className="text-destructive">Lỗi: {error.message}</p>}
       {!isLoading && !error && (
-        <>
+        <div className="relative">
+          {!isLeaf && <DecorativeBackground accent={DOC_ACCENT} />}
           <Breadcrumb path={validPath} nodes={crumbNodes} onNavigate={navigateTo} />
 
           {!isLeaf && (
@@ -127,7 +139,7 @@ export default function DocumentsPublic() {
           )}
 
           {isLeaf && (
-            <>
+            <div className="space-y-4">
               <SearchBar value={search} onChange={setSearch} placeholder="Tìm tài liệu..." />
               <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
               {!filtered.length && <p className="text-muted-foreground">Chưa có tài liệu nào.</p>}
@@ -140,9 +152,9 @@ export default function DocumentsPublic() {
                   )}
                 </ContentCard>
               ))}
-            </>
+            </div>
           )}
-        </>
+        </div>
       )}
     </div>
   )
