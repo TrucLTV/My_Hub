@@ -11,7 +11,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-svh">
       <header className="border-b">
-        <nav className="max-w-3xl mx-auto flex items-center justify-between p-4 text-sm">
+        <nav className="max-w-[1600px] mx-auto flex items-center justify-between p-4 text-sm">
           <div className="flex gap-4">
             <Link to="/admin/ghi-chu">Ghi chú</Link>
             <Link to="/admin/tai-nguyen">Tài nguyên</Link>
@@ -24,7 +24,7 @@ export default function AdminDashboard() {
           </div>
         </nav>
       </header>
-      <main className="max-w-3xl mx-auto p-4">
+      <main className="max-w-[1600px] mx-auto p-4">
         {isRoot ? <p className="text-muted-foreground">Chọn 1 mục để quản lý.</p> : <Outlet />}
       </main>
     </div>

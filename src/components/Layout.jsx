@@ -5,7 +5,7 @@ export default function Layout() {
   return (
     <div className="min-h-svh flex flex-col overflow-x-hidden">
       <header className="bg-blue-950">
-        <nav className="max-w-3xl mx-auto flex items-center justify-between gap-4 p-4 text-sm sm:text-[1.3125rem]">
+        <nav className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 p-4 text-sm sm:text-[1.3125rem]">
           <div className="flex flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap sm:justify-between sm:gap-6 sm:overflow-visible">
             <Link to="/" className="font-semibold text-white">MyHub</Link>
             <Link to="/ghi-chu" className="text-blue-200/80 hover:text-white">Ghi chú</Link>
@@ -16,7 +16,7 @@ export default function Layout() {
           <ThemeToggle className="text-blue-200/80 hover:bg-white/10 hover:text-white" />
         </nav>
       </header>
-      <main className="flex-1 max-w-3xl w-full mx-auto p-4">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4">
         <Outlet />
       </main>
     </div>
