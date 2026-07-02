@@ -1,9 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import AccentCard from '@/components/AccentCard'
 
-export default function ContentCard({ title, description, tags, children }) {
+export default function ContentCard({ title, description, tags, accent = 'sky', children }) {
   return (
-    <Card>
+    <AccentCard accent={accent} className="cursor-default">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
@@ -18,6 +19,6 @@ export default function ContentCard({ title, description, tags, children }) {
         )}
         {children}
       </CardContent>
-    </Card>
+    </AccentCard>
   )
 }

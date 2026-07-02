@@ -5,43 +5,10 @@ import { fetchPublicNotes } from '@/lib/queries/notes'
 import { fetchPublicResources } from '@/lib/queries/resources'
 import { fetchPublicMedia } from '@/lib/queries/media'
 import { fetchPublicDocuments } from '@/lib/queries/documents'
+import { accentClasses } from '@/lib/accentColors'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
-
-const accentClasses = {
-  sky: {
-    border: 'border-t-sky-500',
-    bg: 'bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-950/40 dark:to-sky-900/20',
-    iconBg: 'bg-sky-500/15 shadow-[0_0_20px_-4px] shadow-sky-500/50',
-    iconText: 'text-sky-600 dark:text-sky-400',
-    hoverShadow: 'hover:shadow-sky-500/30',
-    gradient: 'from-sky-500',
-  },
-  violet: {
-    border: 'border-t-violet-500',
-    bg: 'bg-gradient-to-br from-violet-50 to-violet-100 dark:from-violet-950/40 dark:to-violet-900/20',
-    iconBg: 'bg-violet-500/15 shadow-[0_0_20px_-4px] shadow-violet-500/50',
-    iconText: 'text-violet-600 dark:text-violet-400',
-    hoverShadow: 'hover:shadow-violet-500/30',
-    gradient: 'via-violet-500',
-  },
-  amber: {
-    border: 'border-t-amber-500',
-    bg: 'bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950/40 dark:to-amber-900/20',
-    iconBg: 'bg-amber-500/15 shadow-[0_0_20px_-4px] shadow-amber-500/50',
-    iconText: 'text-amber-600 dark:text-amber-400',
-    hoverShadow: 'hover:shadow-amber-500/30',
-    gradient: 'via-amber-500',
-  },
-  emerald: {
-    border: 'border-t-emerald-500',
-    bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/40 dark:to-emerald-900/20',
-    iconBg: 'bg-emerald-500/15 shadow-[0_0_20px_-4px] shadow-emerald-500/50',
-    iconText: 'text-emerald-600 dark:text-emerald-400',
-    hoverShadow: 'hover:shadow-emerald-500/30',
-    gradient: 'to-emerald-500',
-  },
-}
+import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
+import AccentCard from '@/components/AccentCard'
 
 const sections = [
   { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, accent: 'emerald', queryFn: fetchPublicDocuments },
@@ -56,9 +23,7 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
   const colors = accentClasses[accent]
 
   return (
-    <Card
-      className={`w-80 shrink-0 border-t-4 ${colors.border} ${colors.bg} ${colors.hoverShadow} cursor-default transition-all duration-200 ease-out hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl`}
-    >
+    <AccentCard accent={accent} className="w-80 shrink-0 cursor-default">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-[1.2rem]">
           <span className={`flex size-10 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
@@ -92,7 +57,7 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
           <ArrowRight className="size-4" />
         </Link>
       </CardFooter>
-    </Card>
+    </AccentCard>
   )
 }
 
