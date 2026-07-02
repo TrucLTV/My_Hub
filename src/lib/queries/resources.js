@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabaseClient'
+import { toPrefixQuery } from '@/lib/textSearch'
 
 export async function fetchPublicResources(search = '') {
   let query = supabase.from('resources').select('*').eq('is_public', true)
   if (search.trim()) {
-    query = query.textSearch('search_vector', search, { type: 'websearch', config: 'simple' })
+    query = query.textSearch('search_vector', toPrefixQuery(search), { config: 'vietnamese' })
   }
   const { data, error } = await query.order('created_at', { ascending: false })
   if (error) throw error

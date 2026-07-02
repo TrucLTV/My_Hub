@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { Folder, ChevronRight } from 'lucide-react'
 import { fetchPublicDocuments, getDocumentSignedUrl } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
@@ -98,6 +98,7 @@ export default function DocumentsPublic() {
   const { data: documents, isLoading, error } = useQuery({
     queryKey: ['documents', 'public', JSON.stringify(filters), isLeaf ? debouncedSearch : ''],
     queryFn: () => fetchPublicDocuments(isLeaf ? debouncedSearch : '', filters),
+    placeholderData: keepPreviousData,
   })
 
   const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(isLeaf ? documents : [])
@@ -120,29 +121,35 @@ export default function DocumentsPublic() {
   return (
     <div className="space-y-4">
       <PageBanner title="Tài liệu" subtitle="Giáo án, giáo trình, tài liệu học tập" />
-      {isLoading && <p>Đang tải...</p>}
-      {error && <p className="text-destructive">Lỗi: {error.message}</p>}
-      {!isLoading && !error && (
-        <div className="relative">
-          {!isLeaf && <DecorativeBackground accent={DOC_ACCENT} />}
-          <Breadcrumb path={validPath} nodes={crumbNodes} onNavigate={navigateTo} />
+      <div className="relative">
+        {!isLeaf && <DecorativeBackground accent={DOC_ACCENT} />}
+        <Breadcrumb path={validPath} nodes={crumbNodes} onNavigate={navigateTo} />
 
-          {!isLeaf && (
-            <FolderGrid
-              entries={Object.entries(currentNode.children).map(([key, node]) => ({
-                key,
-                label: node.label,
-                count: (documents ?? []).filter((d) => matchesChild(d, validPath.length, key)).length,
-              }))}
-              onOpen={openChild}
-            />
-          )}
+        {error && <p className="text-destructive">Lỗi: {error.message}</p>}
 
-          {isLeaf && (
-            <div className="space-y-4">
-              <SearchBar value={search} onChange={setSearch} placeholder="Tìm tài liệu..." />
-              <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
-              {!filtered.length && <p className="text-muted-foreground">Chưa có tài liệu nào.</p>}
+        {!error && !isLeaf && (
+          <>
+            {isLoading && <p>Đang tải...</p>}
+            {!isLoading && (
+              <FolderGrid
+                entries={Object.entries(currentNode.children).map(([key, node]) => ({
+                  key,
+                  label: node.label,
+                  count: (documents ?? []).filter((d) => matchesChild(d, validPath.length, key)).length,
+                }))}
+                onOpen={openChild}
+              />
+            )}
+          </>
+        )}
+
+        {!error && isLeaf && (
+          <div className="space-y-4">
+            <SearchBar value={search} onChange={setSearch} placeholder="Tìm tài liệu..." />
+            <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
+            {isLoading && <p>Đang tải...</p>}
+            {!isLoading && !filtered.length && <p className="text-muted-foreground">Chưa có tài liệu nào.</p>}
+            {!isLoading && (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((doc) => (
                   <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT}>
@@ -154,10 +161,10 @@ export default function DocumentsPublic() {
                   </ContentCard>
                 ))}
               </div>
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
