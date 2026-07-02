@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import ThemeToggle from '@/components/ThemeToggle'
 
 const navTabClass =
-  'rounded-lg border border-border px-3 py-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:bg-accent hover:shadow-lg hover:shadow-primary/20'
+  'rounded-lg border-t-4 border-t-primary border-x border-b border-border bg-card px-3 py-1.5 shadow-md shadow-black/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent hover:shadow-lg hover:shadow-primary/30'
 
 export default function AdminDashboard() {
   const { signOut } = useAuth()

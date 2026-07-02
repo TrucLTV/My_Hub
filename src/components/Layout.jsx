@@ -2,7 +2,7 @@ import { Link, Outlet } from 'react-router-dom'
 import ThemeToggle from '@/components/ThemeToggle'
 
 const navTabClass =
-  'rounded-lg border border-white/15 px-3 py-1.5 text-blue-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:border-orange-400/60 hover:bg-white/5 hover:text-white hover:shadow-lg hover:shadow-orange-500/20'
+  'rounded-lg border-t-4 border-t-orange-400 border-x border-b border-white/10 bg-white/5 px-3 py-1.5 text-blue-200/80 shadow-md shadow-black/20 transition-all duration-200 hover:-translate-y-0.5 hover:border-t-orange-300 hover:text-white hover:shadow-lg hover:shadow-orange-500/30'
 
 export default function Layout() {
   return (
