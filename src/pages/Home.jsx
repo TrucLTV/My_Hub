@@ -8,22 +8,50 @@ import { fetchPublicDocuments } from '@/lib/queries/documents'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 
+const accentClasses = {
+  sky: {
+    border: 'border-t-sky-500',
+    iconBg: 'bg-sky-500/10',
+    iconText: 'text-sky-600 dark:text-sky-400',
+    gradient: 'from-sky-500',
+  },
+  violet: {
+    border: 'border-t-violet-500',
+    iconBg: 'bg-violet-500/10',
+    iconText: 'text-violet-600 dark:text-violet-400',
+    gradient: 'via-violet-500',
+  },
+  amber: {
+    border: 'border-t-amber-500',
+    iconBg: 'bg-amber-500/10',
+    iconText: 'text-amber-600 dark:text-amber-400',
+    gradient: 'via-amber-500',
+  },
+  emerald: {
+    border: 'border-t-emerald-500',
+    iconBg: 'bg-emerald-500/10',
+    iconText: 'text-emerald-600 dark:text-emerald-400',
+    gradient: 'to-emerald-500',
+  },
+}
+
 const sections = [
-  { key: 'notes', title: 'Ghi chú', href: '/ghi-chu', icon: NotebookPen, queryFn: fetchPublicNotes },
-  { key: 'resources', title: 'Tài nguyên', href: '/tai-nguyen', icon: Link2, queryFn: fetchPublicResources },
-  { key: 'media_tracker', title: 'Phim/Game', href: '/phim-game', icon: Clapperboard, queryFn: fetchPublicMedia },
-  { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, queryFn: fetchPublicDocuments },
+  { key: 'notes', title: 'Ghi chú', href: '/ghi-chu', icon: NotebookPen, accent: 'sky', queryFn: fetchPublicNotes },
+  { key: 'resources', title: 'Tài nguyên', href: '/tai-nguyen', icon: Link2, accent: 'violet', queryFn: fetchPublicResources },
+  { key: 'media_tracker', title: 'Phim/Game', href: '/phim-game', icon: Clapperboard, accent: 'amber', queryFn: fetchPublicMedia },
+  { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, accent: 'emerald', queryFn: fetchPublicDocuments },
 ]
 
-function CategoryCard({ title, href, icon: Icon, queryFn }) {
+function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
   const { data, isLoading } = useQuery({ queryKey: [queryFn.name, 'public', ''], queryFn: () => queryFn() })
   const recent = (data ?? []).slice(0, 3)
+  const colors = accentClasses[accent]
 
   return (
-    <Card className="transition-colors hover:ring-foreground/20">
+    <Card className={`border-t-4 ${colors.border} transition-shadow hover:shadow-md`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <span className={`flex size-8 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
             <Icon className="size-4" />
           </span>
           {title}
@@ -61,11 +89,12 @@ function CategoryCard({ title, href, icon: Icon, queryFn }) {
 export default function Home() {
   return (
     <div className="space-y-8">
-      <div className="space-y-2 py-4 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight">MyHub</h1>
-        <p className="mx-auto max-w-md text-muted-foreground">
+      <div className="rounded-2xl bg-zinc-900 px-8 py-12 text-center ring-1 ring-white/10 dark:bg-zinc-950">
+        <h1 className="text-4xl font-semibold tracking-tight text-zinc-50">MyHub</h1>
+        <p className="mx-auto mt-2 max-w-md text-zinc-400">
           Nơi lưu tài liệu công việc, ghi chú cá nhân, theo dõi phim/game và tài nguyên hữu ích.
         </p>
+        <div className="mx-auto mt-6 h-1 w-28 rounded-full bg-gradient-to-r from-sky-500 via-violet-500 to-amber-500" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         {sections.map(({ key, ...section }) => (
