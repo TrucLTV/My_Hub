@@ -5,8 +5,8 @@ export default function Layout() {
   return (
     <div className="min-h-svh flex flex-col overflow-x-hidden">
       <header className="bg-blue-950">
-        <nav className="max-w-3xl mx-auto flex items-center justify-between gap-4 p-4 text-[1.3125rem]">
-          <div className="flex items-center justify-between gap-6 flex-1">
+        <nav className="max-w-3xl mx-auto flex items-center justify-between gap-4 p-4 text-sm sm:text-[1.3125rem]">
+          <div className="flex flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap sm:justify-between sm:gap-6 sm:overflow-visible">
             <Link to="/" className="font-semibold text-white">MyHub</Link>
             <Link to="/ghi-chu" className="text-blue-200/80 hover:text-white">Ghi chú</Link>
             <Link to="/tai-nguyen" className="text-blue-200/80 hover:text-white">Tài nguyên</Link>
