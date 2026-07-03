@@ -11,10 +11,10 @@ export default function Layout() {
         <nav className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 p-4 text-sm sm:text-[1.3125rem]">
           <div className="flex flex-1 items-center gap-2 overflow-x-auto whitespace-nowrap sm:justify-between sm:gap-3 sm:overflow-visible">
             <Link to="/" className="font-semibold text-white px-2">MyHub</Link>
+            <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
             <Link to="/ghi-chu" className={navTabClass}>Ghi chú</Link>
             <Link to="/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
             <Link to="/phim-game" className={navTabClass}>Giải trí</Link>
-            <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
           </div>
           <ThemeToggle className="text-blue-200/80 hover:bg-white/10 hover:text-white" />
         </nav>
