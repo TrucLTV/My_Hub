@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { toPrefixQuery } from '@/lib/textSearch'
 
 export async function fetchPublicDocuments(search = '', filters = {}) {
-  let query = supabase.from('documents').select('*').eq('is_public', true)
+  let query = supabase.from('documents_public_view').select('*')
   for (const [column, value] of Object.entries(filters)) {
     query = query.eq(column, value)
   }
@@ -61,4 +61,10 @@ export async function getDocumentSignedUrl(path, downloadName) {
     .createSignedUrl(path, 3600, { download: downloadName ?? true })
   if (error) throw error
   return data.signedUrl
+}
+
+export async function unlockDocumentPath(id, password) {
+  const { data, error } = await supabase.rpc('get_locked_document_path', { p_id: id, p_password: password })
+  if (error) throw error
+  return data
 }

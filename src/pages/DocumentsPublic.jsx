@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Folder, ChevronRight } from 'lucide-react'
-import { fetchPublicDocuments, getDocumentSignedUrl } from '@/lib/queries/documents'
+import { Folder, ChevronRight, Lock } from 'lucide-react'
+import { fetchPublicDocuments, getDocumentSignedUrl, unlockDocumentPath } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
 import { accentClasses } from '@/lib/accentColors'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
@@ -12,6 +12,7 @@ import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PageBanner from '@/components/PageBanner'
 import AccentCard from '@/components/AccentCard'
+import PasswordPrompt from '@/components/PasswordPrompt'
 import { Button } from '@/components/ui/button'
 
 const PATH_PARAMS = ['loai', 'mon', 'khoi', 'nhom']
@@ -118,6 +119,15 @@ export default function DocumentsPublic() {
 
   const crumbNodes = validPath.map((_, i) => getTaxonomyNode(validPath.slice(0, i + 1)))
 
+  const [lockedDoc, setLockedDoc] = useState(null)
+
+  async function handleUnlockAndDownload(password) {
+    const path = await unlockDocumentPath(lockedDoc.id, password)
+    if (path == null) return false
+    await handleDownload(path, `${lockedDoc.title}.${lockedDoc.file_type}`)
+    return true
+  }
+
   return (
     <div className="space-y-4">
       <PageBanner title="Tài liệu" subtitle="Giáo án, giáo trình, tài liệu học tập" />
@@ -158,6 +168,11 @@ export default function DocumentsPublic() {
                         Tải xuống ({doc.file_type})
                       </Button>
                     )}
+                    {doc.is_locked && !doc.file_url && (
+                      <Button size="sm" variant="outline" onClick={() => setLockedDoc(doc)}>
+                        <Lock className="size-4" /> Nhập mật khẩu để tải ({doc.file_type})
+                      </Button>
+                    )}
                   </ContentCard>
                 ))}
               </div>
@@ -165,6 +180,12 @@ export default function DocumentsPublic() {
           </div>
         )}
       </div>
+      <PasswordPrompt
+        open={lockedDoc !== null}
+        onOpenChange={(v) => !v && setLockedDoc(null)}
+        onSubmit={handleUnlockAndDownload}
+        title="Tài liệu bị khóa"
+      />
     </div>
   )
 }

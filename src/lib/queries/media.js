@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { toPrefixQuery } from '@/lib/textSearch'
 
 export async function fetchPublicMedia(search = '') {
-  let query = supabase.from('media_tracker').select('*').eq('is_public', true)
+  let query = supabase.from('media_public_view').select('*')
   if (search.trim()) {
     query = query.textSearch('search_vector', toPrefixQuery(search), { config: 'vietnamese' })
   }
@@ -48,4 +48,10 @@ export async function uploadCoverImage(file) {
   if (error) throw error
   const { data } = supabase.storage.from('covers').getPublicUrl(path)
   return data.publicUrl
+}
+
+export async function unlockMediaReview(id, password) {
+  const { data, error } = await supabase.rpc('get_locked_media_review', { p_id: id, p_password: password })
+  if (error) throw error
+  return data
 }

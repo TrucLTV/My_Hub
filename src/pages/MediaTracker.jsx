@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { fetchPublicMedia } from '@/lib/queries/media'
+import { Lock } from 'lucide-react'
+import { fetchPublicMedia, unlockMediaReview } from '@/lib/queries/media'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useTagFilter } from '@/hooks/useTagFilter'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PageBanner from '@/components/PageBanner'
 import AccentCard from '@/components/AccentCard'
+import PasswordPrompt from '@/components/PasswordPrompt'
 
 const statusLabel = {
   backlog: 'Chưa xem',
@@ -25,6 +28,16 @@ export default function MediaTracker() {
     placeholderData: keepPreviousData,
   })
   const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(items)
+
+  const [promptId, setPromptId] = useState(null)
+  const [revealed, setRevealed] = useState({})
+
+  async function handleUnlock(password) {
+    const review = await unlockMediaReview(promptId, password)
+    if (review == null) return false
+    setRevealed((prev) => ({ ...prev, [promptId]: review }))
+    return true
+  }
 
   return (
     <div className="space-y-4">
@@ -55,11 +68,25 @@ export default function MediaTracker() {
                     ))}
                   </div>
                 )}
+                {item.is_locked && !revealed[item.id] && (
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => setPromptId(item.id)}>
+                    <Lock className="size-4" /> Xem đánh giá
+                  </Button>
+                )}
+                {(revealed[item.id] || (!item.is_locked && item.review)) && (
+                  <p className="text-xs text-muted-foreground">{revealed[item.id] ?? item.review}</p>
+                )}
               </div>
             </AccentCard>
           ))}
         </div>
       )}
+      <PasswordPrompt
+        open={promptId !== null}
+        onOpenChange={(v) => !v && setPromptId(null)}
+        onSubmit={handleUnlock}
+        title="Đánh giá bị khóa"
+      />
     </div>
   )
 }

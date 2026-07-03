@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchAllResources, createResource, updateResource, deleteResource } from '@/lib/queries/resources'
+import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -14,7 +16,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-const emptyForm = { title: '', url: '', description: '', category: '', tags: '', is_public: false }
+const emptyForm = { title: '', url: '', description: '', category: '', tags: '', visibility: 'private' }
+
+function VisibilityBadge({ row }) {
+  const v = fieldsToVisibility(row)
+  if (v === 'public') return <Badge>Public</Badge>
+  if (v === 'locked') return <Badge variant="outline">Khóa tải</Badge>
+  return <Badge variant="secondary">Private</Badge>
+}
 
 export default function AdminResources() {
   const queryClient = useQueryClient()
@@ -50,7 +59,7 @@ export default function AdminResources() {
       description: resource.description ?? '',
       category: resource.category ?? '',
       tags: (resource.tags ?? []).join(', '),
-      is_public: resource.is_public,
+      visibility: fieldsToVisibility(resource),
     })
     setOpen(true)
   }
@@ -63,7 +72,7 @@ export default function AdminResources() {
       description: form.description,
       category: form.category,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-      is_public: form.is_public,
+      ...visibilityToFields(form.visibility),
     }
     if (editingId) {
       updateMutation.mutate({ id: editingId, updates: payload })
@@ -133,14 +142,16 @@ export default function AdminResources() {
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="is_public"
-                  type="checkbox"
-                  checked={form.is_public}
-                  onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
-                />
-                <Label htmlFor="is_public">Công khai</Label>
+              <div className="space-y-1">
+                <Label>Hiển thị</Label>
+                <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full">Lưu</Button>
             </form>
@@ -154,11 +165,7 @@ export default function AdminResources() {
             <div>
               <div className="flex items-center gap-2">
                 <p className="font-medium">{resource.title}</p>
-                {resource.is_public ? (
-                  <Badge>Public</Badge>
-                ) : (
-                  <Badge variant="secondary">Private</Badge>
-                )}
+                <VisibilityBadge row={resource} />
               </div>
               <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline">
                 {resource.url}

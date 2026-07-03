@@ -14,6 +14,7 @@ import AdminNotes from '@/pages/admin/AdminNotes'
 import AdminResources from '@/pages/admin/AdminResources'
 import AdminMedia from '@/pages/admin/AdminMedia'
 import AdminDocuments from '@/pages/admin/AdminDocuments'
+import AdminSettings from '@/pages/admin/AdminSettings'
 
 export default function App() {
   const theme = useThemeStore((s) => s.theme)
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="tai-nguyen" element={<AdminResources />} />
         <Route path="phim-game" element={<AdminMedia />} />
         <Route path="tai-lieu" element={<AdminDocuments />} />
+        <Route path="cai-dat" element={<AdminSettings />} />
       </Route>
     </Routes>
   )

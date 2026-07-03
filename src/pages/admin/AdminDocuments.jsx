@@ -9,6 +9,7 @@ import {
   getDocumentSignedUrl,
 } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY } from '@/lib/documentTaxonomy'
+import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -31,7 +32,7 @@ const emptyForm = {
   grade_level: '',
   material_type: '',
   tags: '',
-  is_public: false,
+  visibility: 'private',
   file_url: '',
   file_type: '',
   sort_order: '',
@@ -39,6 +40,13 @@ const emptyForm = {
 
 function labelFor(dict, key) {
   return dict?.[key]?.label ?? key
+}
+
+function VisibilityBadge({ row }) {
+  const v = fieldsToVisibility(row)
+  if (v === 'public') return <Badge>Public</Badge>
+  if (v === 'locked') return <Badge variant="outline">Khóa tải</Badge>
+  return <Badge variant="secondary">Private</Badge>
 }
 
 export default function AdminDocuments() {
@@ -80,7 +88,7 @@ export default function AdminDocuments() {
       grade_level: doc.grade_level ?? '',
       material_type: doc.material_type ?? '',
       tags: (doc.tags ?? []).join(', '),
-      is_public: doc.is_public,
+      visibility: fieldsToVisibility(doc),
       file_url: doc.file_url ?? '',
       file_type: doc.file_type ?? '',
       sort_order: doc.sort_order ?? '',
@@ -110,7 +118,7 @@ export default function AdminDocuments() {
       grade_level: form.grade_level || null,
       material_type: form.material_type || null,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-      is_public: form.is_public,
+      ...visibilityToFields(form.visibility),
       file_url: fileUrl,
       file_type: fileType,
       sort_order: form.sort_order === '' ? null : Number(form.sort_order),
@@ -243,9 +251,16 @@ export default function AdminDocuments() {
                   <p className="text-xs text-muted-foreground">Đã có file: {form.file_type}</p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <input id="is_public" type="checkbox" checked={form.is_public} onChange={(e) => setForm({ ...form, is_public: e.target.checked })} />
-                <Label htmlFor="is_public">Công khai</Label>
+              <div className="space-y-1">
+                <Label>Hiển thị</Label>
+                <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full" disabled={uploading}>
                 {uploading ? 'Đang tải file...' : 'Lưu'}
@@ -261,7 +276,7 @@ export default function AdminDocuments() {
             <div className="flex items-center gap-2 flex-wrap">
               {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
               <p className="font-medium">{doc.title}</p>
-              {doc.is_public ? <Badge>Public</Badge> : <Badge variant="secondary">Private</Badge>}
+              <VisibilityBadge row={doc} />
             </div>
             {(doc.category || doc.subject || doc.grade_level || doc.material_type) && (
               <div className="flex flex-wrap gap-1">

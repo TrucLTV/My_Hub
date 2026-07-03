@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchAllMedia, createMedia, updateMedia, deleteMedia, uploadCoverImage } from '@/lib/queries/media'
+import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,8 +24,15 @@ const emptyForm = {
   review: '',
   progress: '',
   genre: '',
-  is_public: false,
+  visibility: 'private',
   cover_url: '',
+}
+
+function VisibilityBadge({ row }) {
+  const v = fieldsToVisibility(row)
+  if (v === 'public') return <Badge>Public</Badge>
+  if (v === 'locked') return <Badge variant="outline">Khóa tải</Badge>
+  return <Badge variant="secondary">Private</Badge>
 }
 
 export default function AdminMedia() {
@@ -63,7 +71,7 @@ export default function AdminMedia() {
       review: item.review ?? '',
       progress: item.progress ?? '',
       genre: (item.genre ?? []).join(', '),
-      is_public: item.is_public,
+      visibility: fieldsToVisibility(item),
       cover_url: item.cover_url ?? '',
     })
     setCoverFile(null)
@@ -89,7 +97,7 @@ export default function AdminMedia() {
       review: form.review,
       progress: form.progress,
       genre: form.genre.split(',').map((t) => t.trim()).filter(Boolean),
-      is_public: form.is_public,
+      ...visibilityToFields(form.visibility),
       cover_url: coverUrl,
     }
     if (editingId) {
@@ -169,9 +177,16 @@ export default function AdminMedia() {
                   <img src={form.cover_url} alt="cover hiện tại" className="h-24 mt-1 rounded" />
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <input id="is_public" type="checkbox" checked={form.is_public} onChange={(e) => setForm({ ...form, is_public: e.target.checked })} />
-                <Label htmlFor="is_public">Công khai</Label>
+              <div className="space-y-1">
+                <Label>Hiển thị</Label>
+                <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full" disabled={uploading}>
                 {uploading ? 'Đang tải ảnh...' : 'Lưu'}
@@ -188,7 +203,7 @@ export default function AdminMedia() {
             <div className="p-2 space-y-1">
               <div className="flex items-center justify-between gap-1">
                 <p className="font-medium text-sm truncate">{item.title}</p>
-                {item.is_public ? <Badge>Public</Badge> : <Badge variant="secondary">Private</Badge>}
+                <VisibilityBadge row={item} />
               </div>
               <div className="flex gap-1">
                 <Button variant="outline" size="sm" onClick={() => openEdit(item)}>Sửa</Button>

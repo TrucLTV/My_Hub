@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { toPrefixQuery } from '@/lib/textSearch'
 
 export async function fetchPublicNotes(search = '') {
-  let query = supabase.from('notes').select('*').eq('is_public', true)
+  let query = supabase.from('notes_public_view').select('*')
   if (search.trim()) {
     query = query.textSearch('search_vector', toPrefixQuery(search), { config: 'vietnamese' })
   }
@@ -40,4 +40,10 @@ export async function updateNote(id, updates) {
 export async function deleteNote(id) {
   const { error } = await supabase.from('notes').delete().eq('id', id)
   if (error) throw error
+}
+
+export async function unlockNoteContent(id, password) {
+  const { data, error } = await supabase.rpc('get_locked_note_content', { p_id: id, p_password: password })
+  if (error) throw error
+  return data
 }

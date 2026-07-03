@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { toPrefixQuery } from '@/lib/textSearch'
 
 export async function fetchPublicResources(search = '') {
-  let query = supabase.from('resources').select('*').eq('is_public', true)
+  let query = supabase.from('resources_public_view').select('*')
   if (search.trim()) {
     query = query.textSearch('search_vector', toPrefixQuery(search), { config: 'vietnamese' })
   }
@@ -40,4 +40,10 @@ export async function updateResource(id, updates) {
 export async function deleteResource(id) {
   const { error } = await supabase.from('resources').delete().eq('id', id)
   if (error) throw error
+}
+
+export async function unlockResourceUrl(id, password) {
+  const { data, error } = await supabase.rpc('get_locked_resource_url', { p_id: id, p_password: password })
+  if (error) throw error
+  return data
 }

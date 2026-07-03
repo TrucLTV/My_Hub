@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchAllNotes, createNote, updateNote, deleteNote } from '@/lib/queries/notes'
+import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -14,7 +16,14 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-const emptyForm = { title: '', content: '', tags: '', is_public: false }
+const emptyForm = { title: '', content: '', tags: '', visibility: 'private' }
+
+function VisibilityBadge({ row }) {
+  const v = fieldsToVisibility(row)
+  if (v === 'public') return <Badge>Public</Badge>
+  if (v === 'locked') return <Badge variant="outline">Khóa tải</Badge>
+  return <Badge variant="secondary">Private</Badge>
+}
 
 export default function AdminNotes() {
   const queryClient = useQueryClient()
@@ -45,7 +54,7 @@ export default function AdminNotes() {
       title: note.title,
       content: note.content ?? '',
       tags: (note.tags ?? []).join(', '),
-      is_public: note.is_public,
+      visibility: fieldsToVisibility(note),
     })
     setOpen(true)
   }
@@ -56,7 +65,7 @@ export default function AdminNotes() {
       title: form.title,
       content: form.content,
       tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-      is_public: form.is_public,
+      ...visibilityToFields(form.visibility),
     }
     if (editingId) {
       updateMutation.mutate({ id: editingId, updates: payload })
@@ -108,14 +117,16 @@ export default function AdminNotes() {
                   onChange={(e) => setForm({ ...form, tags: e.target.value })}
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="is_public"
-                  type="checkbox"
-                  checked={form.is_public}
-                  onChange={(e) => setForm({ ...form, is_public: e.target.checked })}
-                />
-                <Label htmlFor="is_public">Công khai</Label>
+              <div className="space-y-1">
+                <Label>Hiển thị</Label>
+                <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {VISIBILITY_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full">Lưu</Button>
             </form>
@@ -129,11 +140,7 @@ export default function AdminNotes() {
             <div>
               <div className="flex items-center gap-2">
                 <p className="font-medium">{note.title}</p>
-                {note.is_public ? (
-                  <Badge>Public</Badge>
-                ) : (
-                  <Badge variant="secondary">Private</Badge>
-                )}
+                <VisibilityBadge row={note} />
               </div>
               {note.tags?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1">

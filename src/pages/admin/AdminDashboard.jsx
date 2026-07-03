@@ -20,6 +20,7 @@ export default function AdminDashboard() {
             <Link to="/admin/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
             <Link to="/admin/phim-game" className={navTabClass}>Giải trí</Link>
             <Link to="/admin/tai-lieu" className={navTabClass}>Tài liệu</Link>
+            <Link to="/admin/cai-dat" className={navTabClass}>Cài đặt</Link>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
