@@ -106,7 +106,7 @@ export default function AdminMedia() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Quản lý phim/game</h1>
+        <h1 className="text-xl font-semibold">Quản lý giải trí</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button onClick={openCreate} />}>
             + Mục mới

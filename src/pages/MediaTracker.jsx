@@ -28,8 +28,8 @@ export default function MediaTracker() {
 
   return (
     <div className="space-y-4">
-      <PageBanner title="Phim/Game" subtitle="Đang xem, đã hoàn thành, đánh giá cá nhân" />
-      <SearchBar value={search} onChange={setSearch} placeholder="Tìm phim/game..." />
+      <PageBanner title="Giải trí" subtitle="Đang xem, đã hoàn thành, đánh giá cá nhân" />
+      <SearchBar value={search} onChange={setSearch} placeholder="Tìm giải trí..." />
       <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
       {isLoading && <p>Đang tải...</p>}
       {error && <p className="text-destructive">Lỗi: {error.message}</p>}

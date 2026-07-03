@@ -13,7 +13,7 @@ export default function Layout() {
             <Link to="/" className="font-semibold text-white px-2">MyHub</Link>
             <Link to="/ghi-chu" className={navTabClass}>Ghi chú</Link>
             <Link to="/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
-            <Link to="/phim-game" className={navTabClass}>Phim/Game</Link>
+            <Link to="/phim-game" className={navTabClass}>Giải trí</Link>
             <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
           </div>
           <ThemeToggle className="text-blue-200/80 hover:bg-white/10 hover:text-white" />
