@@ -110,7 +110,7 @@ function RootColumns({ documents, onOpenPath }) {
   return (
     <div className="grid gap-4 py-6 md:grid-cols-2">
       <div className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 shadow-lg shadow-black/20 ring-1 ring-slate-300/40">
-        <div className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-violet-700 px-4 py-3 font-semibold text-white">
+        <div className="flex items-center gap-2 bg-gradient-to-r from-violet-800 to-violet-950 px-4 py-3 font-semibold text-white">
           <GraduationCap className="size-5" /> Giảng dạy
         </div>
         <div className="flex flex-wrap justify-center gap-3 bg-card p-4">
@@ -139,7 +139,7 @@ function RootColumns({ documents, onOpenPath }) {
         onClick={() => onOpenPath(['hoc_tap'])}
         className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 text-left shadow-lg shadow-black/20 ring-1 ring-slate-300/40 transition-all duration-200 hover:-translate-y-1"
       >
-        <div className="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-700 px-4 py-3 font-semibold text-white">
+        <div className="flex items-center gap-2 bg-gradient-to-r from-sky-800 to-sky-950 px-4 py-3 font-semibold text-white">
           <BookOpen className="size-5" /> Học tập
         </div>
         <div className="flex flex-col items-center justify-center gap-2 bg-card p-8 text-center">
