@@ -17,7 +17,7 @@ export default function AdminDashboard() {
         <nav className="max-w-[1600px] mx-auto flex items-center justify-between p-4 text-sm">
           <div className="flex gap-2">
             <Link to="/admin/tai-lieu" className={navTabClass}>Tài liệu</Link>
-            <Link to="/admin/ghi-chu" className={navTabClass}>Ghi chú</Link>
+            <Link to="/admin/ghi-chu" className={navTabClass}>Mini game</Link>
             <Link to="/admin/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
             <Link to="/admin/phim-game" className={navTabClass}>Giải trí</Link>
             <Link to="/admin/cai-dat" className={navTabClass}>Cài đặt</Link>

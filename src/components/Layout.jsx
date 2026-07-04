@@ -12,7 +12,7 @@ export default function Layout() {
           <div className="flex flex-1 items-center gap-2 overflow-x-auto whitespace-nowrap sm:justify-between sm:gap-3 sm:overflow-visible">
             <Link to="/" className="font-semibold text-white px-2">MyHub</Link>
             <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
-            <Link to="/ghi-chu" className={navTabClass}>Ghi chú</Link>
+            <Link to="/ghi-chu" className={navTabClass}>Mini game</Link>
             <Link to="/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
             <Link to="/phim-game" className={navTabClass}>Giải trí</Link>
           </div>

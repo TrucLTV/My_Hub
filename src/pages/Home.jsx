@@ -12,7 +12,7 @@ import AccentCard from '@/components/AccentCard'
 
 const sections = [
   { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, accent: 'emerald', queryFn: fetchPublicDocuments },
-  { key: 'notes', title: 'Ghi chú', href: '/ghi-chu', icon: NotebookPen, accent: 'sky', queryFn: fetchPublicNotes },
+  { key: 'notes', title: 'Mini game', href: '/ghi-chu', icon: NotebookPen, accent: 'sky', queryFn: fetchPublicNotes },
   { key: 'resources', title: 'Tài nguyên', href: '/tai-nguyen', icon: Link2, accent: 'violet', queryFn: fetchPublicResources },
   { key: 'media_tracker', title: 'Giải trí', href: '/phim-game', icon: Clapperboard, accent: 'amber', queryFn: fetchPublicMedia },
 ]

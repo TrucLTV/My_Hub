@@ -81,14 +81,14 @@ export default function AdminNotes() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Quản lý ghi chú</h1>
+        <h1 className="text-xl font-semibold">Quản lý mini game</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button onClick={openCreate} />}>
-            + Ghi chú mới
+            + Mini game mới
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Sửa ghi chú' : 'Ghi chú mới'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Sửa mini game' : 'Mini game mới'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1">

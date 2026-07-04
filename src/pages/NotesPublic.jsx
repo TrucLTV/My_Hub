@@ -34,8 +34,8 @@ export default function NotesPublic() {
 
   return (
     <div className="space-y-4">
-      <PageBanner title="Ghi chú" subtitle="Ý tưởng, note nhanh, chia sẻ khi cần" />
-      <SearchBar value={search} onChange={setSearch} placeholder="Tìm ghi chú..." />
+      <PageBanner title="Mini game" subtitle="Ý tưởng, note nhanh, chia sẻ khi cần" />
+      <SearchBar value={search} onChange={setSearch} placeholder="Tìm mini game..." />
       <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
       {isLoading && <p>Đang tải...</p>}
       {error && <p className="text-destructive">Lỗi: {error.message}</p>}
@@ -58,7 +58,7 @@ export default function NotesPublic() {
         open={promptId !== null}
         onOpenChange={(v) => !v && setPromptId(null)}
         onSubmit={handleUnlock}
-        title="Ghi chú bị khóa"
+        title="Mini game bị khóa"
       />
     </div>
   )
