@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock, Download } from 'lucide-react'
+import { Folder, ChevronRight, Lock, Download, GraduationCap, BookOpen, Monitor, Bot, Code2 } from 'lucide-react'
 import { fetchPublicDocuments, getDocumentSignedUrl, unlockDocumentPath } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
 import { accentClasses } from '@/lib/accentColors'
@@ -56,6 +56,67 @@ function DecorativeBackground({ accent }) {
   )
 }
 
+const SUBJECT_ICONS = {
+  tin_hoc: Monitor,
+  robot: Bot,
+  lap_trinh: Code2,
+}
+
+function countDocs(documents, filters) {
+  return documents.filter((d) => Object.entries(filters).every(([k, v]) => d[k] === v)).length
+}
+
+function RootColumns({ documents, onOpenPath }) {
+  const colors = accentClasses[DOC_ACCENT]
+  const giangDaySubjects = DOCUMENT_TAXONOMY.giang_day.children
+  const hocTapCount = countDocs(documents, { category: 'hoc_tap' })
+
+  return (
+    <div className="grid gap-4 py-6 md:grid-cols-2">
+      <div className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 shadow-lg shadow-black/20 ring-1 ring-slate-300/40">
+        <div className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-3 font-semibold text-white">
+          <GraduationCap className="size-5" /> Giảng dạy
+        </div>
+        <div className="flex flex-wrap justify-center gap-3 bg-card p-4">
+          {Object.entries(giangDaySubjects).map(([key, node]) => {
+            const Icon = SUBJECT_ICONS[key] ?? Folder
+            return (
+              <button
+                key={key}
+                onClick={() => onOpenPath(['giang_day', key])}
+                className="flex w-28 cursor-pointer flex-col items-center gap-2 rounded-lg p-3 text-center transition-all duration-200 hover:-translate-y-1 hover:bg-accent"
+              >
+                <span className={`flex size-11 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
+                  <Icon className="size-5" />
+                </span>
+                <p className="w-full truncate text-sm font-medium">{node.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {countDocs(documents, { category: 'giang_day', subject: key })} tài liệu
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <button
+        onClick={() => onOpenPath(['hoc_tap'])}
+        className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 text-left shadow-lg shadow-black/20 ring-1 ring-slate-300/40 transition-all duration-200 hover:-translate-y-1"
+      >
+        <div className="flex items-center gap-2 bg-gradient-to-r from-sky-600 to-sky-700 px-4 py-3 font-semibold text-white">
+          <BookOpen className="size-5" /> Học tập
+        </div>
+        <div className="flex flex-col items-center justify-center gap-2 bg-card p-8 text-center">
+          <span className={`flex size-14 items-center justify-center rounded-lg ${accentClasses.sky.iconBg} ${accentClasses.sky.iconText}`}>
+            <BookOpen className="size-7" />
+          </span>
+          <p className="text-muted-foreground">{hocTapCount} tài liệu</p>
+        </div>
+      </button>
+    </div>
+  )
+}
+
 function FolderGrid({ entries, onOpen }) {
   const colors = accentClasses[DOC_ACCENT]
   if (!entries.length) return <p className="text-muted-foreground">Chưa có mục nào.</p>
@@ -105,9 +166,12 @@ export default function DocumentsPublic() {
   const { allTags, selectedTags, toggleTag, filtered } = useTagFilter(isLeaf ? documents : [])
 
   function openChild(key) {
-    const nextPath = [...validPath, key]
+    openPath([...validPath, key])
+  }
+
+  function openPath(path) {
     const next = new URLSearchParams()
-    nextPath.forEach((v, i) => next.set(PATH_PARAMS[i], v))
+    path.forEach((v, i) => next.set(PATH_PARAMS[i], v))
     setSearchParams(next)
   }
 
@@ -140,7 +204,10 @@ export default function DocumentsPublic() {
         {!error && !isLeaf && (
           <>
             {isLoading && <p>Đang tải...</p>}
-            {!isLoading && (
+            {!isLoading && validPath.length === 0 && (
+              <RootColumns documents={documents ?? []} onOpenPath={openPath} />
+            )}
+            {!isLoading && validPath.length > 0 && (
               <FolderGrid
                 entries={Object.entries(currentNode.children).map(([key, node]) => ({
                   key,
