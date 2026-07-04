@@ -35,26 +35,26 @@ function CategoryCard({ title, href, icon: Icon, accent, data, isLoading }) {
   const colors = accentClasses[accent]
 
   return (
-    <AccentCard accent={accent} className="w-80 shrink-0 cursor-default">
+    <AccentCard accent={accent} size="sm" className="w-64 shrink-0 cursor-default">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-[1.2rem]">
-          <span className={`flex size-10 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
-            <Icon className="size-5" />
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <span className={`flex size-7 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
+            <Icon className="size-3.5" />
           </span>
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="min-h-20">
-        {isLoading && <p className="text-[1.05rem] text-muted-foreground">Đang tải...</p>}
+      <CardContent className="min-h-16">
+        {isLoading && <p className="text-sm text-muted-foreground">Đang tải...</p>}
         {!isLoading && !recent.length && (
-          <p className="text-[1.05rem] text-muted-foreground">Chưa có nội dung công khai.</p>
+          <p className="text-sm text-muted-foreground">Chưa có nội dung công khai.</p>
         )}
-        <ul className="space-y-1.5">
+        <ul className="space-y-1">
           {recent.map((item) => (
-            <li key={item.id} className="flex items-center gap-2 text-[1.05rem]">
+            <li key={item.id} className="flex items-center gap-1.5 text-sm">
               <span className="truncate">{item.title}</span>
               {(item.tags ?? item.genre ?? []).slice(0, 2).map((tag) => (
-                <Badge key={tag} variant="outline" className="shrink-0 text-[0.9rem]">{tag}</Badge>
+                <Badge key={tag} variant="outline" className="shrink-0 text-xs">{tag}</Badge>
               ))}
             </li>
           ))}
@@ -63,10 +63,10 @@ function CategoryCard({ title, href, icon: Icon, accent, data, isLoading }) {
       <CardFooter>
         <Link
           to={href}
-          className="flex items-center gap-1 text-[1.05rem] text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           Xem tất cả
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-3.5" />
         </Link>
       </CardFooter>
     </AccentCard>
