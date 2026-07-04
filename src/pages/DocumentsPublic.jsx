@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock, Download, GraduationCap, BookOpen, Monitor, Bot, Code2 } from 'lucide-react'
+import { Folder, ChevronRight, Lock, Download, GraduationCap, BookOpen, Monitor, Bot, Code2, Sparkles } from 'lucide-react'
 import { fetchPublicDocuments, getDocumentSignedUrl, unlockDocumentPath } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
 import { accentClasses } from '@/lib/accentColors'
+import { timeAgo } from '@/lib/timeAgo'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useTagFilter } from '@/hooks/useTagFilter'
 import ContentCard from '@/components/ContentCard'
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/button'
 
 const PATH_PARAMS = ['loai', 'mon', 'khoi', 'nhom']
 const DOC_ACCENT = 'emerald'
+const GIANG_DAY_ACCENT = 'violet'
 
 async function handleDownload(path, filename) {
   const url = await getDocumentSignedUrl(path, filename)
@@ -66,15 +68,49 @@ function countDocs(documents, filters) {
   return documents.filter((d) => Object.entries(filters).every(([k, v]) => d[k] === v)).length
 }
 
+function RecentDocuments({ documents }) {
+  const recent = [...documents]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 6)
+  if (!recent.length) return null
+
+  return (
+    <div className="space-y-2 pb-2">
+      <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+        <Sparkles className="size-4" /> Cập nhật gần đây
+      </h2>
+      <div className="flex flex-wrap gap-2">
+        {recent.map((doc) => {
+          const accent = doc.category === 'hoc_tap' ? 'sky' : GIANG_DAY_ACCENT
+          const colors = accentClasses[accent]
+          const Icon = doc.category === 'hoc_tap' ? BookOpen : GraduationCap
+          return (
+            <span
+              key={doc.id}
+              className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm"
+            >
+              <span className={`flex size-5 items-center justify-center rounded-full ${colors.iconBg} ${colors.iconText}`}>
+                <Icon className="size-3" />
+              </span>
+              <span className="max-w-40 truncate font-medium">{doc.title}</span>
+              <span className="text-xs text-muted-foreground">{timeAgo(doc.created_at)}</span>
+            </span>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function RootColumns({ documents, onOpenPath }) {
-  const colors = accentClasses[DOC_ACCENT]
+  const colors = accentClasses[GIANG_DAY_ACCENT]
   const giangDaySubjects = DOCUMENT_TAXONOMY.giang_day.children
   const hocTapCount = countDocs(documents, { category: 'hoc_tap' })
 
   return (
     <div className="grid gap-4 py-6 md:grid-cols-2">
       <div className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 shadow-lg shadow-black/20 ring-1 ring-slate-300/40">
-        <div className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-3 font-semibold text-white">
+        <div className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-violet-700 px-4 py-3 font-semibold text-white">
           <GraduationCap className="size-5" /> Giảng dạy
         </div>
         <div className="flex flex-wrap justify-center gap-3 bg-card p-4">
@@ -205,7 +241,10 @@ export default function DocumentsPublic() {
           <>
             {isLoading && <p>Đang tải...</p>}
             {!isLoading && validPath.length === 0 && (
-              <RootColumns documents={documents ?? []} onOpenPath={openPath} />
+              <>
+                <RecentDocuments documents={documents ?? []} />
+                <RootColumns documents={documents ?? []} onOpenPath={openPath} />
+              </>
             )}
             {!isLoading && validPath.length > 0 && (
               <FolderGrid
