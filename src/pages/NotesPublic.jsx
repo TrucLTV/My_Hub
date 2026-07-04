@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Lock } from 'lucide-react'
+import { Lock, NotebookPen } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { fetchPublicNotes, unlockNoteContent } from '@/lib/queries/notes'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
@@ -41,9 +41,9 @@ export default function NotesPublic() {
       {error && <p className="text-destructive">Lỗi: {error.message}</p>}
       {!isLoading && !error && !filtered.length && <p className="text-muted-foreground">Không có ghi chú nào.</p>}
       {!isLoading && !error && filtered.map((note) => (
-        <ContentCard key={note.id} title={note.title} tags={note.tags} accent="sky">
+        <ContentCard key={note.id} title={note.title} tags={note.tags} accent="sky" icon={NotebookPen}>
           {note.is_locked && !revealed[note.id] && (
-            <Button variant="outline" size="sm" onClick={() => setPromptId(note.id)}>
+            <Button className="w-full" onClick={() => setPromptId(note.id)}>
               <Lock className="size-4" /> Nhập mật khẩu để xem
             </Button>
           )}

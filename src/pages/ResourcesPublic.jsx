@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Lock } from 'lucide-react'
+import { Lock, Link2, ExternalLink } from 'lucide-react'
 import { fetchPublicResources, unlockResourceUrl } from '@/lib/queries/resources'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useTagFilter } from '@/hooks/useTagFilter'
@@ -40,21 +40,21 @@ export default function ResourcesPublic() {
       {error && <p className="text-destructive">Lỗi: {error.message}</p>}
       {!isLoading && !error && !filtered.length && <p className="text-muted-foreground">Không có tài nguyên nào.</p>}
       {!isLoading && !error && filtered.map((resource) => (
-        <ContentCard key={resource.id} title={resource.title} description={resource.description} tags={resource.tags} accent="violet">
+        <ContentCard key={resource.id} title={resource.title} description={resource.description} tags={resource.tags} accent="violet" icon={Link2}>
           {resource.is_locked && !revealed[resource.id] && (
-            <Button variant="outline" size="sm" onClick={() => setPromptId(resource.id)}>
+            <Button className="w-full" onClick={() => setPromptId(resource.id)}>
               <Lock className="size-4" /> Nhập mật khẩu để xem link
             </Button>
           )}
           {(!resource.is_locked || revealed[resource.id]) && (
-            <a
-              href={revealed[resource.id] ?? resource.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary underline"
+            <Button
+              className="w-full"
+              render={
+                <a href={revealed[resource.id] ?? resource.url} target="_blank" rel="noopener noreferrer" />
+              }
             >
-              {revealed[resource.id] ?? resource.url}
-            </a>
+              <ExternalLink className="size-4" /> Mở link
+            </Button>
           )}
         </ContentCard>
       ))}

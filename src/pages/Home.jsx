@@ -1,14 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { NotebookPen, Link2, Clapperboard, FolderOpen, ArrowRight } from 'lucide-react'
+import { NotebookPen, Link2, Clapperboard, FolderOpen, ArrowRight, Sparkles } from 'lucide-react'
 import { fetchPublicNotes } from '@/lib/queries/notes'
 import { fetchPublicResources } from '@/lib/queries/resources'
 import { fetchPublicMedia } from '@/lib/queries/media'
 import { fetchPublicDocuments } from '@/lib/queries/documents'
 import { accentClasses } from '@/lib/accentColors'
+import { timeAgo } from '@/lib/timeAgo'
 import { Badge } from '@/components/ui/badge'
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import AccentCard from '@/components/AccentCard'
+
+const textColor = {
+  sky: 'text-sky-400',
+  violet: 'text-violet-400',
+  amber: 'text-amber-400',
+  emerald: 'text-emerald-400',
+}
 
 const sections = [
   { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, accent: 'emerald', queryFn: fetchPublicDocuments },
@@ -17,9 +25,13 @@ const sections = [
   { key: 'media_tracker', title: 'Giải trí', href: '/phim-game', icon: Clapperboard, accent: 'amber', queryFn: fetchPublicMedia },
 ]
 
-function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
-  const { data, isLoading } = useQuery({ queryKey: [queryFn.name, 'public', ''], queryFn: () => queryFn() })
-  const recent = (data ?? []).slice(0, 3)
+function useSectionData(section) {
+  const { data, isLoading } = useQuery({ queryKey: [section.queryFn.name, 'public', ''], queryFn: () => section.queryFn() })
+  return { data: data ?? [], isLoading }
+}
+
+function CategoryCard({ title, href, icon: Icon, accent, data, isLoading }) {
+  const recent = data.slice(0, 3)
   const colors = accentClasses[accent]
 
   return (
@@ -61,7 +73,24 @@ function CategoryCard({ title, href, icon: Icon, accent, queryFn }) {
   )
 }
 
+function StatTile({ label, value, accent = 'sky', highlight = false }) {
+  return (
+    <AccentCard accent={accent} className="cursor-default items-center gap-1 px-6 py-4 text-center">
+      <p className={`text-3xl font-bold ${highlight ? 'text-white' : textColor[accent]}`}>{value}</p>
+      <p className="text-xs tracking-wide text-muted-foreground uppercase">{label}</p>
+    </AccentCard>
+  )
+}
+
 export default function Home() {
+  const bySection = sections.map((section) => ({ ...section, ...useSectionData(section) }))
+  const total = bySection.reduce((sum, s) => sum + s.data.length, 0)
+
+  const recentItems = bySection
+    .flatMap((s) => s.data.map((item) => ({ ...item, __section: s })))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 6)
+
   return (
     <div className="-mt-4 space-y-8">
       <div className="relative flex w-screen mx-[calc(50%-50vw)] flex-col items-center justify-center bg-gradient-to-b from-blue-950 via-blue-950 to-slate-950 px-6 py-16 text-center">
@@ -71,10 +100,45 @@ export default function Home() {
         </p>
         <div className="mx-auto mt-6 h-1 w-28 rounded-full bg-gradient-to-r from-sky-500 via-violet-500 to-amber-500" />
       </div>
+
+      <div className="flex flex-wrap justify-center gap-3">
+        <StatTile label="Tổng cộng" value={total} highlight />
+        {bySection.map((s) => (
+          <StatTile key={s.key} label={s.title} value={s.data.length} accent={s.accent} />
+        ))}
+      </div>
+
+      {recentItems.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground uppercase tracking-wide">
+            <Sparkles className="size-4" /> Cập nhật gần đây
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {recentItems.map((item) => {
+              const colors = accentClasses[item.__section.accent]
+              const Icon = item.__section.icon
+              return (
+                <Link
+                  key={`${item.__section.key}-${item.id}`}
+                  to={item.__section.href}
+                  className={`flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:shadow-primary/20`}
+                >
+                  <span className={`flex size-5 items-center justify-center rounded-full ${colors.iconBg} ${colors.iconText}`}>
+                    <Icon className="size-3" />
+                  </span>
+                  <span className="max-w-40 truncate font-medium">{item.title}</span>
+                  <span className="text-xs text-muted-foreground">{timeAgo(item.created_at)}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="relative w-screen mx-[calc(50%-50vw)]">
         <div className="mx-auto max-w-[1400px] overflow-x-auto px-4 pb-2">
           <div className="mx-auto flex w-fit gap-4">
-            {sections.map(({ key, ...section }) => (
+            {bySection.map(({ key, ...section }) => (
               <CategoryCard key={key} {...section} />
             ))}
           </div>

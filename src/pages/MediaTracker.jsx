@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Lock } from 'lucide-react'
+import { Lock, Clapperboard } from 'lucide-react'
+import { accentClasses } from '@/lib/accentColors'
 import { fetchPublicMedia, unlockMediaReview } from '@/lib/queries/media'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useTagFilter } from '@/hooks/useTagFilter'
@@ -31,6 +32,7 @@ export default function MediaTracker() {
 
   const [promptId, setPromptId] = useState(null)
   const [revealed, setRevealed] = useState({})
+  const colors = accentClasses.amber
 
   async function handleUnlock(password) {
     const review = await unlockMediaReview(promptId, password)
@@ -55,7 +57,12 @@ export default function MediaTracker() {
                 <img src={item.cover_url} alt={item.title} className="w-full aspect-[2/3] object-cover" />
               )}
               <div className="p-2 space-y-1">
-                <p className="font-medium text-sm">{item.title}</p>
+                <p className="flex items-center gap-1.5 font-medium text-sm">
+                  <span className={`flex size-6 shrink-0 items-center justify-center rounded-md ${colors.iconBg} ${colors.iconText}`}>
+                    <Clapperboard className="size-3.5" />
+                  </span>
+                  <span className="truncate">{item.title}</span>
+                </p>
                 <div className="flex items-center gap-1 flex-wrap">
                   <Badge variant="secondary">{statusLabel[item.status] ?? item.status}</Badge>
                   {item.rating != null && <Badge variant="outline">★ {item.rating}</Badge>}
@@ -69,7 +76,7 @@ export default function MediaTracker() {
                   </div>
                 )}
                 {item.is_locked && !revealed[item.id] && (
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => setPromptId(item.id)}>
+                  <Button size="sm" className="w-full" onClick={() => setPromptId(item.id)}>
                     <Lock className="size-4" /> Xem đánh giá
                   </Button>
                 )}

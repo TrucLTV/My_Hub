@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock } from 'lucide-react'
+import { Folder, ChevronRight, Lock, Download } from 'lucide-react'
 import { fetchPublicDocuments, getDocumentSignedUrl, unlockDocumentPath } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
 import { accentClasses } from '@/lib/accentColors'
@@ -162,14 +162,14 @@ export default function DocumentsPublic() {
             {!isLoading && (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((doc) => (
-                  <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT}>
+                  <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT} icon={Folder}>
                     {doc.file_url && (
-                      <Button size="sm" variant="outline" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
-                        Tải xuống ({doc.file_type})
+                      <Button className="w-full" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
+                        <Download className="size-4" /> Tải xuống ({doc.file_type})
                       </Button>
                     )}
                     {doc.is_locked && !doc.file_url && (
-                      <Button size="sm" variant="outline" onClick={() => setLockedDoc(doc)}>
+                      <Button className="w-full" onClick={() => setLockedDoc(doc)}>
                         <Lock className="size-4" /> Nhập mật khẩu để tải ({doc.file_type})
                       </Button>
                     )}
