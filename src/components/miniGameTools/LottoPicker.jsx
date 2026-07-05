@@ -11,12 +11,19 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import LottoCageFrame from '@/components/miniGameTools/LottoCageFrame'
+import { LottoCageStand, LottoCageSphere } from '@/components/miniGameTools/LottoCageFrame'
 
 const BALL_COLORS = ['bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500']
 const CAGE_CENTER = { x: 130, y: 105 }
 const CAGE_SCATTER_RADIUS = 66
 const SPIN_DURATION_MS = 2200
+const MIN_CAGE_BALLS = 26
+
+function randomPointInDisk(radius) {
+  const angle = Math.random() * Math.PI * 2
+  const r = radius * Math.sqrt(Math.random())
+  return { x: Math.cos(angle) * r, y: Math.sin(angle) * r }
+}
 
 const emptyForm = { name: '', studentsText: '' }
 
@@ -32,12 +39,13 @@ export default function LottoPicker() {
   const students = roster?.students ?? []
 
   const ballPositions = useMemo(() => {
-    return students.map(() => {
-      const angle = Math.random() * Math.PI * 2
-      const r = CAGE_SCATTER_RADIUS * Math.sqrt(Math.random())
-      return { x: Math.cos(angle) * r, y: Math.sin(angle) * r }
-    })
+    return students.map(() => randomPointInDisk(CAGE_SCATTER_RADIUS))
   }, [roster?.id, students.length])
+
+  const fillerCount = Math.max(0, MIN_CAGE_BALLS - students.length)
+  const fillerPositions = useMemo(() => {
+    return Array.from({ length: fillerCount }, () => randomPointInDisk(CAGE_SCATTER_RADIUS))
+  }, [roster?.id, fillerCount])
 
   const [removeAfterDraw, setRemoveAfterDraw] = useState(true)
   const [drawn, setDrawn] = useState(new Set())
@@ -229,12 +237,24 @@ export default function LottoPicker() {
               </label>
 
               <div className="relative mx-auto h-[250px] w-[300px]">
-                <LottoCageFrame />
+                <LottoCageStand />
                 <div
                   key={spinRound}
                   style={{ transformOrigin: `${CAGE_CENTER.x}px ${CAGE_CENTER.y}px` }}
                   className={cn('absolute inset-0', spinning && 'animate-lotto-spin')}
                 >
+                  <LottoCageSphere />
+                  {fillerPositions.map((pos, i) => (
+                    <span
+                      key={`filler-${i}`}
+                      style={{
+                        left: CAGE_CENTER.x + pos.x,
+                        top: CAGE_CENTER.y + pos.y,
+                        transform: 'translate(-50%, -50%)',
+                      }}
+                      className="absolute size-4 shrink-0 rounded-full bg-white/10"
+                    />
+                  ))}
                   {students.map((_, i) => {
                     if (result?.index === i) return null
                     const isDrawn = drawn.has(i)
