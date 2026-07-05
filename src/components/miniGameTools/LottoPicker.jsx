@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { LottoCageStand, LottoCageSphere } from '@/components/miniGameTools/LottoCageFrame'
 
-const BALL_COLORS = ['bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500']
+const BALL_BASE_COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#f43f5e', '#06b6d4']
 const CAGE_CENTER = { x: 130, y: 105 }
 const CAGE_SCATTER_RADIUS = 66
 const SPIN_DURATION_MS = 2200
@@ -25,6 +25,10 @@ function randomPointInDisk(radius) {
   const angle = Math.random() * Math.PI * 2
   const r = radius * Math.sqrt(Math.random())
   return { x: Math.cos(angle) * r, y: Math.sin(angle) * r }
+}
+
+function ballGradient(hex) {
+  return `radial-gradient(circle at 32% 26%, #ffffff 0%, ${hex} 45%, color-mix(in srgb, ${hex} 55%, black) 100%)`
 }
 
 const emptyForm = { name: '', studentsText: '' }
@@ -101,6 +105,8 @@ export default function LottoPicker() {
     setSpinning(true)
     setResult(null)
     setSpinRound((r) => r + 1)
+    setLivePositions(students.map(() => randomPointInDisk(CAGE_SCATTER_RADIUS)))
+    setLiveFillerPositions(Array.from({ length: fillerCount }, () => randomPointInDisk(CAGE_SCATTER_RADIUS)))
     const idx = pool[Math.floor(Math.random() * pool.length)]
     setTimeout(() => {
       setResult({ index: idx, name: students[idx] })
@@ -270,11 +276,11 @@ export default function LottoPicker() {
                         left: CAGE_CENTER.x + pos.x,
                         top: CAGE_CENTER.y + pos.y,
                         transform: 'translate(-50%, -50%)',
+                        background: ballGradient(BALL_BASE_COLORS[i % BALL_BASE_COLORS.length]),
                       }}
                       className={cn(
-                        'absolute shrink-0 rounded-full opacity-60 shadow-md shadow-black/30 transition-all duration-150 ease-out',
-                        BALL_SIZE_CLASS,
-                        BALL_COLORS[i % BALL_COLORS.length]
+                        'absolute shrink-0 rounded-full opacity-60 shadow-md shadow-black/40 transition-all duration-150 ease-out',
+                        BALL_SIZE_CLASS
                       )}
                     />
                   ))}
@@ -289,11 +295,12 @@ export default function LottoPicker() {
                           left: CAGE_CENTER.x + pos.x,
                           top: CAGE_CENTER.y + pos.y,
                           transform: 'translate(-50%, -50%)',
+                          background: isDrawn ? undefined : ballGradient(BALL_BASE_COLORS[i % BALL_BASE_COLORS.length]),
                         }}
                         className={cn(
-                          'absolute flex shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/30 transition-all duration-150 ease-out',
+                          'absolute flex shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/40 transition-all duration-150 ease-out',
                           BALL_SIZE_CLASS,
-                          isDrawn ? 'bg-white/10 text-white/30' : BALL_COLORS[i % BALL_COLORS.length]
+                          isDrawn && 'bg-white/10 text-white/30'
                         )}
                       >
                         {i + 1}
@@ -313,10 +320,8 @@ export default function LottoPicker() {
               {result && (
                 <div className="mx-auto flex w-fit flex-col items-center gap-2">
                   <span
-                    className={cn(
-                      'flex size-16 shrink-0 animate-in items-center justify-center rounded-full text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 slide-in-from-top-10 duration-500',
-                      BALL_COLORS[result.index % BALL_COLORS.length]
-                    )}
+                    style={{ background: ballGradient(BALL_BASE_COLORS[result.index % BALL_BASE_COLORS.length]) }}
+                    className="flex size-16 shrink-0 animate-in items-center justify-center rounded-full text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 slide-in-from-top-10 duration-500"
                   >
                     {result.index + 1}
                   </span>
