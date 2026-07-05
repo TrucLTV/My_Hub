@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { NotebookPen, Link2, Clapperboard, FolderOpen, ArrowRight, Sparkles } from 'lucide-react'
-import { fetchPublicNotes } from '@/lib/queries/notes'
+import { Gamepad2, Link2, Clapperboard, FolderOpen, ArrowRight, Sparkles } from 'lucide-react'
+import { fetchPublicMiniGames } from '@/lib/queries/miniGames'
 import { fetchPublicResources } from '@/lib/queries/resources'
 import { fetchPublicMedia } from '@/lib/queries/media'
 import { fetchPublicDocuments } from '@/lib/queries/documents'
@@ -20,7 +20,7 @@ const textColor = {
 
 const sections = [
   { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, accent: 'emerald', queryFn: fetchPublicDocuments },
-  { key: 'notes', title: 'Mini game', href: '/ghi-chu', icon: NotebookPen, accent: 'sky', queryFn: fetchPublicNotes },
+  { key: 'mini_games', title: 'Mini game', href: '/mini-game', icon: Gamepad2, accent: 'sky', queryFn: fetchPublicMiniGames },
   { key: 'resources', title: 'Tài nguyên', href: '/tai-nguyen', icon: Link2, accent: 'violet', queryFn: fetchPublicResources },
   { key: 'media_tracker', title: 'Giải trí', href: '/phim-game', icon: Clapperboard, accent: 'amber', queryFn: fetchPublicMedia },
 ]
