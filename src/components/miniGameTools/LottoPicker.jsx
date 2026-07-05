@@ -11,10 +11,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import LottoCageFrame from '@/components/miniGameTools/LottoCageFrame'
 
 const BALL_COLORS = ['bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500']
-const CAGE_RADIUS = 128
-const BALL_MARGIN = 32
+const CAGE_CENTER = { x: 130, y: 105 }
+const CAGE_SCATTER_RADIUS = 66
 const SPIN_DURATION_MS = 2200
 
 const emptyForm = { name: '', studentsText: '' }
@@ -31,10 +32,9 @@ export default function LottoPicker() {
   const students = roster?.students ?? []
 
   const ballPositions = useMemo(() => {
-    const maxR = CAGE_RADIUS - BALL_MARGIN
     return students.map(() => {
       const angle = Math.random() * Math.PI * 2
-      const r = maxR * Math.sqrt(Math.random())
+      const r = CAGE_SCATTER_RADIUS * Math.sqrt(Math.random())
       return { x: Math.cos(angle) * r, y: Math.sin(angle) * r }
     })
   }, [roster?.id, students.length])
@@ -228,8 +228,13 @@ export default function LottoPicker() {
                 Loại tên đã gọi khỏi lượt quay tiếp theo
               </label>
 
-              <div className="relative mx-auto flex h-64 w-64 items-center justify-center overflow-hidden rounded-full border-4 border-sky-400/60 bg-sky-950/30 shadow-inner shadow-black/40">
-                <div key={spinRound} className={cn('absolute inset-0', spinning && 'animate-lotto-spin')}>
+              <div className="relative mx-auto h-[250px] w-[300px]">
+                <LottoCageFrame />
+                <div
+                  key={spinRound}
+                  style={{ transformOrigin: `${CAGE_CENTER.x}px ${CAGE_CENTER.y}px` }}
+                  className={cn('absolute inset-0', spinning && 'animate-lotto-spin')}
+                >
                   {students.map((_, i) => {
                     if (result?.index === i) return null
                     const isDrawn = drawn.has(i)
@@ -237,9 +242,13 @@ export default function LottoPicker() {
                     return (
                       <span
                         key={i}
-                        style={{ transform: `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px)` }}
+                        style={{
+                          left: CAGE_CENTER.x + pos.x,
+                          top: CAGE_CENTER.y + pos.y,
+                          transform: 'translate(-50%, -50%)',
+                        }}
                         className={cn(
-                          'absolute top-1/2 left-1/2 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/30',
+                          'absolute flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/30',
                           isDrawn ? 'bg-white/10 text-white/30' : BALL_COLORS[i % BALL_COLORS.length]
                         )}
                       >
@@ -248,7 +257,6 @@ export default function LottoPicker() {
                     )
                   })}
                 </div>
-                <div className="absolute -bottom-1 left-1/2 h-3 w-10 -translate-x-1/2 rounded-t-full bg-sky-400/60" />
               </div>
 
               <div className="flex justify-center gap-2">
