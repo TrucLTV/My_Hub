@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dices, Plus, Pencil, Trash2 } from 'lucide-react'
 import { fetchRosters, createRoster, updateRoster, deleteRoster } from '@/lib/queries/rosters'
@@ -18,6 +18,8 @@ const CAGE_CENTER = { x: 130, y: 105 }
 const CAGE_SCATTER_RADIUS = 66
 const SPIN_DURATION_MS = 2200
 const MIN_CAGE_BALLS = 26
+const JITTER_INTERVAL_MS = 160
+const BALL_SIZE_CLASS = 'size-7'
 
 function randomPointInDisk(radius) {
   const angle = Math.random() * Math.PI * 2
@@ -47,11 +49,28 @@ export default function LottoPicker() {
     return Array.from({ length: fillerCount }, () => randomPointInDisk(CAGE_SCATTER_RADIUS))
   }, [roster?.id, fillerCount])
 
+  const [livePositions, setLivePositions] = useState(ballPositions)
+  const [liveFillerPositions, setLiveFillerPositions] = useState(fillerPositions)
+
+  useEffect(() => {
+    setLivePositions(ballPositions)
+    setLiveFillerPositions(fillerPositions)
+  }, [ballPositions, fillerPositions])
+
   const [removeAfterDraw, setRemoveAfterDraw] = useState(true)
   const [drawn, setDrawn] = useState(new Set())
   const [spinning, setSpinning] = useState(false)
   const [spinRound, setSpinRound] = useState(0)
   const [result, setResult] = useState(null)
+
+  useEffect(() => {
+    if (!spinning) return
+    const interval = setInterval(() => {
+      setLivePositions(students.map(() => randomPointInDisk(CAGE_SCATTER_RADIUS)))
+      setLiveFillerPositions(Array.from({ length: fillerCount }, () => randomPointInDisk(CAGE_SCATTER_RADIUS)))
+    }, JITTER_INTERVAL_MS)
+    return () => clearInterval(interval)
+  }, [spinning, students.length, fillerCount])
 
   const [managing, setManaging] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -244,7 +263,7 @@ export default function LottoPicker() {
                   className={cn('absolute inset-0', spinning && 'animate-lotto-spin')}
                 >
                   <LottoCageSphere />
-                  {fillerPositions.map((pos, i) => (
+                  {liveFillerPositions.map((pos, i) => (
                     <span
                       key={`filler-${i}`}
                       style={{
@@ -252,13 +271,17 @@ export default function LottoPicker() {
                         top: CAGE_CENTER.y + pos.y,
                         transform: 'translate(-50%, -50%)',
                       }}
-                      className="absolute size-4 shrink-0 rounded-full bg-white/10"
+                      className={cn(
+                        'absolute shrink-0 rounded-full opacity-60 shadow-md shadow-black/30 transition-all duration-150 ease-out',
+                        BALL_SIZE_CLASS,
+                        BALL_COLORS[i % BALL_COLORS.length]
+                      )}
                     />
                   ))}
                   {students.map((_, i) => {
                     if (result?.index === i) return null
                     const isDrawn = drawn.has(i)
-                    const pos = ballPositions[i] ?? { x: 0, y: 0 }
+                    const pos = livePositions[i] ?? { x: 0, y: 0 }
                     return (
                       <span
                         key={i}
@@ -268,7 +291,8 @@ export default function LottoPicker() {
                           transform: 'translate(-50%, -50%)',
                         }}
                         className={cn(
-                          'absolute flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/30',
+                          'absolute flex shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/30 transition-all duration-150 ease-out',
+                          BALL_SIZE_CLASS,
                           isDrawn ? 'bg-white/10 text-white/30' : BALL_COLORS[i % BALL_COLORS.length]
                         )}
                       >
