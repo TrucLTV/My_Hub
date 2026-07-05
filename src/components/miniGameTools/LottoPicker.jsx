@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Dices, Plus, Pencil, Trash2 } from 'lucide-react'
 import { fetchRosters, createRoster, updateRoster, deleteRoster } from '@/lib/queries/rosters'
@@ -13,6 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 const BALL_COLORS = ['bg-sky-500', 'bg-violet-500', 'bg-amber-500', 'bg-emerald-500', 'bg-rose-500', 'bg-cyan-500']
+const CAGE_RADIUS = 128
+const BALL_MARGIN = 32
+const SPIN_DURATION_MS = 2200
 
 const emptyForm = { name: '', studentsText: '' }
 
@@ -27,10 +30,19 @@ export default function LottoPicker() {
   const roster = rosters?.find((r) => r.id === rosterId)
   const students = roster?.students ?? []
 
+  const ballPositions = useMemo(() => {
+    const maxR = CAGE_RADIUS - BALL_MARGIN
+    return students.map(() => {
+      const angle = Math.random() * Math.PI * 2
+      const r = maxR * Math.sqrt(Math.random())
+      return { x: Math.cos(angle) * r, y: Math.sin(angle) * r }
+    })
+  }, [roster?.id, students.length])
+
   const [removeAfterDraw, setRemoveAfterDraw] = useState(true)
   const [drawn, setDrawn] = useState(new Set())
-  const [highlight, setHighlight] = useState(null)
   const [spinning, setSpinning] = useState(false)
+  const [spinRound, setSpinRound] = useState(0)
   const [result, setResult] = useState(null)
 
   const [managing, setManaging] = useState(false)
@@ -48,13 +60,11 @@ export default function LottoPicker() {
     setRosterId(id)
     setDrawn(new Set())
     setResult(null)
-    setHighlight(null)
   }
 
   function resetDraw() {
     setDrawn(new Set())
     setResult(null)
-    setHighlight(null)
   }
 
   function spin() {
@@ -63,23 +73,13 @@ export default function LottoPicker() {
     if (pool.length === 0) return
     setSpinning(true)
     setResult(null)
-    let ticks = 0
-    const maxTicks = 18
-    let delay = 60
-    const tick = () => {
-      const idx = pool[Math.floor(Math.random() * pool.length)]
-      setHighlight(idx)
-      ticks++
-      if (ticks < maxTicks) {
-        delay = Math.min(delay * 1.18, 320)
-        setTimeout(tick, delay)
-      } else {
-        setResult({ index: idx, name: students[idx] })
-        if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(idx))
-        setSpinning(false)
-      }
-    }
-    tick()
+    setSpinRound((r) => r + 1)
+    const idx = pool[Math.floor(Math.random() * pool.length)]
+    setTimeout(() => {
+      setResult({ index: idx, name: students[idx] })
+      if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(idx))
+      setSpinning(false)
+    }, SPIN_DURATION_MS)
   }
 
   function openCreate() {
@@ -228,24 +228,27 @@ export default function LottoPicker() {
                 Loại tên đã gọi khỏi lượt quay tiếp theo
               </label>
 
-              <div className="mx-auto flex h-64 w-64 flex-wrap content-center items-center justify-center gap-1.5 overflow-hidden rounded-full border-4 border-sky-400/60 bg-sky-950/30 p-6">
-                {students.map((_, i) => {
-                  const isDrawn = drawn.has(i)
-                  const isHighlighted = highlight === i
-                  return (
-                    <span
-                      key={i}
-                      className={cn(
-                        'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white transition-all duration-150',
-                        isDrawn && 'scale-90 bg-white/10 text-white/30',
-                        !isDrawn && isHighlighted && 'scale-125 bg-amber-400 text-black shadow-lg shadow-amber-400/60',
-                        !isDrawn && !isHighlighted && BALL_COLORS[i % BALL_COLORS.length]
-                      )}
-                    >
-                      {i + 1}
-                    </span>
-                  )
-                })}
+              <div className="relative mx-auto flex h-64 w-64 items-center justify-center overflow-hidden rounded-full border-4 border-sky-400/60 bg-sky-950/30 shadow-inner shadow-black/40">
+                <div key={spinRound} className={cn('absolute inset-0', spinning && 'animate-lotto-spin')}>
+                  {students.map((_, i) => {
+                    if (result?.index === i) return null
+                    const isDrawn = drawn.has(i)
+                    const pos = ballPositions[i] ?? { x: 0, y: 0 }
+                    return (
+                      <span
+                        key={i}
+                        style={{ transform: `translate(-50%, -50%) translate(${pos.x}px, ${pos.y}px)` }}
+                        className={cn(
+                          'absolute top-1/2 left-1/2 flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/30',
+                          isDrawn ? 'bg-white/10 text-white/30' : BALL_COLORS[i % BALL_COLORS.length]
+                        )}
+                      >
+                        {i + 1}
+                      </span>
+                    )
+                  })}
+                </div>
+                <div className="absolute -bottom-1 left-1/2 h-3 w-10 -translate-x-1/2 rounded-t-full bg-sky-400/60" />
               </div>
 
               <div className="flex justify-center gap-2">
@@ -256,9 +259,18 @@ export default function LottoPicker() {
               </div>
 
               {result && (
-                <div className="mx-auto flex w-fit flex-col items-center gap-1 rounded-xl border-t-4 border-t-orange-400 bg-card px-8 py-4 text-center shadow-lg">
-                  <span className="text-xs text-muted-foreground">Số {result.index + 1}</span>
-                  <span className="text-2xl font-bold">{result.name}</span>
+                <div className="mx-auto flex w-fit flex-col items-center gap-2">
+                  <span
+                    className={cn(
+                      'flex size-16 shrink-0 animate-in items-center justify-center rounded-full text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 slide-in-from-top-10 duration-500',
+                      BALL_COLORS[result.index % BALL_COLORS.length]
+                    )}
+                  >
+                    {result.index + 1}
+                  </span>
+                  <span className="animate-in rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
+                    {result.name}
+                  </span>
                 </div>
               )}
             </div>
