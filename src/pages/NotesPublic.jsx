@@ -34,7 +34,7 @@ export default function NotesPublic() {
 
   return (
     <div className="space-y-4">
-      <PageBanner title="Mini game" subtitle="Ý tưởng, note nhanh, chia sẻ khi cần" />
+      <PageBanner title="Mini game" subtitle="Hỗ trợ dạy học, tương tác với học sinh" />
       <SearchBar value={search} onChange={setSearch} placeholder="Tìm mini game..." />
       <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
       {isLoading && <p>Đang tải...</p>}
