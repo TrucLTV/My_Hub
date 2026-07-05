@@ -166,7 +166,11 @@ export default function AdminMiniGames() {
               <div className="space-y-1">
                 <Label>Danh mục</Label>
                 <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Chọn danh mục" /></SelectTrigger>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn danh mục">
+                      {() => MINI_GAME_CATEGORIES[form.category]?.label ?? 'Chọn danh mục'}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(MINI_GAME_CATEGORIES).map(([key, node]) => (
                       <SelectItem key={key} value={key}>{node.label}</SelectItem>
@@ -181,7 +185,11 @@ export default function AdminMiniGames() {
                   value={form.delivery_type}
                   onValueChange={(v) => setForm({ ...form, delivery_type: v })}
                 >
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Chọn dạng nội dung" /></SelectTrigger>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn dạng nội dung">
+                      {() => DELIVERY_TYPES[form.delivery_type]?.label ?? 'Chọn dạng nội dung'}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {Object.entries(DELIVERY_TYPES).map(([key, node]) => (
                       <SelectItem key={key} value={key}>{node.label}</SelectItem>
@@ -194,7 +202,11 @@ export default function AdminMiniGames() {
                 <div className="space-y-1">
                   <Label>Công cụ</Label>
                   <Select value={form.tool_key} onValueChange={(v) => setForm({ ...form, tool_key: v })}>
-                    <SelectTrigger className="w-full"><SelectValue placeholder="Chọn công cụ" /></SelectTrigger>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Chọn công cụ">
+                        {() => MINI_GAME_TOOLS[form.tool_key]?.label ?? 'Chọn công cụ'}
+                      </SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       {toolEntries.length === 0 && (
                         <SelectItem value="__none" disabled>Chưa có công cụ nào được lập trình</SelectItem>

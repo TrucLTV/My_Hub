@@ -16,6 +16,7 @@ import AccentCard from '@/components/AccentCard'
 import PasswordPrompt from '@/components/PasswordPrompt'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 const ACCENT = 'sky'
 
@@ -56,7 +57,7 @@ function CategoryGrid({ games, onOpen }) {
   )
 }
 
-function GameActions({ game, revealed, onRequestUnlock }) {
+function GameActions({ game, revealed, onRequestUnlock, onPlay }) {
   const payload = revealed ?? game
   const isLocked = game.is_locked && !revealed
 
@@ -96,7 +97,7 @@ function GameActions({ game, revealed, onRequestUnlock }) {
       )
     }
     return (
-      <Button className="w-full" onClick={() => tool.open?.()}>
+      <Button className="w-full" onClick={() => onPlay(tool, game.title)}>
         <Globe className="size-4" /> Chơi ngay
       </Button>
     )
@@ -123,6 +124,7 @@ export default function MiniGamesPublic() {
 
   const [promptId, setPromptId] = useState(null)
   const [revealed, setRevealed] = useState({})
+  const [activeTool, setActiveTool] = useState(null)
 
   async function handleUnlock(password) {
     const payload = await unlockMiniGamePayload(promptId, password)
@@ -188,6 +190,7 @@ export default function MiniGamesPublic() {
                     game={game}
                     revealed={revealed[game.id]}
                     onRequestUnlock={() => setPromptId(game.id)}
+                    onPlay={(tool, title) => setActiveTool({ ...tool, title })}
                   />
                 </ContentCard>
               )
@@ -202,6 +205,15 @@ export default function MiniGamesPublic() {
         onSubmit={handleUnlock}
         title="Mini game bị khóa"
       />
+
+      <Dialog open={activeTool !== null} onOpenChange={(v) => !v && setActiveTool(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{activeTool?.title}</DialogTitle>
+          </DialogHeader>
+          {activeTool && <activeTool.component />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
