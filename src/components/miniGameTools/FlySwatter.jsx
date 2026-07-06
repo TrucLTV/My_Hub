@@ -124,7 +124,9 @@ export default function FlySwatter() {
 
   function swat() {
     if (dying.length > 0 || remaining.length === 0) return
-    const batchSize = Math.min(groupSize, remaining.length)
+    // Nếu phần còn lại sau khi tách 1 nhóm sẽ nhỏ hơn 1 nhóm đầy đủ,
+    // gộp luôn số dư đó vào nhóm cuối này thay vì để lẻ ra một nhóm riêng.
+    const batchSize = remaining.length < groupSize * 2 ? remaining.length : groupSize
     const shuffled = [...remaining].sort(() => Math.random() - 0.5)
     const batch = shuffled.slice(0, batchSize)
     const rest = shuffled.slice(batchSize)
