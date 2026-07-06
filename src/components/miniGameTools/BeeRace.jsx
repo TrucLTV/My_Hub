@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import RosterPicker from '@/components/miniGameTools/RosterPicker'
 
 const SCENE = { width: 320, height: 230 }
-const SCENE_SCALE = 2.2
+const SCENE_SCALE = 3
 const SKY = { xMin: 20, xMax: 300, yMin: 12, yMax: 116 }
 const HOVER_ZONE = { xMin: 26, xMax: 294, yMin: 122, yMax: 146 }
 const GROUND = { xMin: 26, xMax: 294, yMin: 154, yMax: 206 }
@@ -18,7 +18,7 @@ const MIN_FILLER_FLOWERS = 10
 const DEFAULT_FLIGHT_SECONDS = 3
 const MIN_FLIGHT_SECONDS = 1
 const MAX_FLIGHT_SECONDS = 10
-const WAYPOINT_SAMPLES = 9
+const WAYPOINT_SAMPLES = 48
 const FLOWERS = ['🌸', '🌼', '🌻', '🌺', '🌷']
 
 function randomPointInRect(rect) {
@@ -286,7 +286,7 @@ export default function BeeRace() {
                     animationDelay: `${fillerIdle[i]?.delay ?? 0}s`,
                     animationDuration: `${fillerIdle[i]?.duration ?? 2.5}s`,
                   }}
-                  className={cn('absolute text-lg opacity-70 transition-all ease-in-out', !racing && 'animate-bee-hover')}
+                  className={cn('absolute text-lg opacity-70 transition-all ease-linear', !racing && 'animate-bee-hover')}
                 >
                   🐝
                 </span>
@@ -308,13 +308,13 @@ export default function BeeRace() {
                     transform: 'translate(-50%, -50%)',
                     transitionDuration: `${dur}ms`,
                   }}
-                  className={cn('absolute flex flex-col items-center transition-all ease-in-out', !racing && !result && 'animate-bee-hover')}
+                  className={cn('absolute flex items-center justify-center transition-all ease-linear', !racing && !result && 'animate-bee-hover')}
                 >
                   <span className={cn('text-xl leading-none', isDrawn && 'opacity-30 grayscale')}>🐝</span>
                   <span
                     className={cn(
-                      'mt-0.5 flex size-4 items-center justify-center rounded-full text-[10px] font-bold shadow',
-                      isDrawn ? 'bg-white/20 text-white/50' : 'bg-amber-400 text-black'
+                      'absolute flex size-3.5 items-center justify-center rounded-full text-[9px] font-bold shadow',
+                      isDrawn ? 'bg-white/30 text-white/60' : 'bg-amber-400 text-black'
                     )}
                   >
                     {i + 1}

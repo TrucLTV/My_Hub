@@ -14,7 +14,7 @@ const SPIN_DURATION_MS = 2200
 const MIN_CAGE_BALLS = 26
 const JITTER_INTERVAL_MS = 160
 const BALL_SIZE_CLASS = 'size-7'
-const CAGE_SCALE = 2.2
+const CAGE_SCALE = 3
 
 function randomPointInDisk(radius) {
   const angle = Math.random() * Math.PI * 2

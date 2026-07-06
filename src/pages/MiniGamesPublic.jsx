@@ -223,7 +223,7 @@ export default function MiniGamesPublic() {
             <DialogTitle>{activeTool?.title}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-1 items-center justify-center overflow-y-auto">
-            <div className="w-full max-w-4xl">{activeTool && <activeTool.component />}</div>
+            <div className="w-full max-w-6xl">{activeTool && <activeTool.component />}</div>
           </div>
         </DialogContent>
       </Dialog>
