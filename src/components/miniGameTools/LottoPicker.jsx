@@ -13,8 +13,9 @@ const CAGE_SCATTER_RADIUS = 66
 const SPIN_DURATION_MS = 2200
 const MIN_CAGE_BALLS = 26
 const JITTER_INTERVAL_MS = 160
-const BALL_SIZE_CLASS = 'size-7'
-const CAGE_SCALE = 3
+const BALL_SIZE_CLASS = 'size-6'
+const CAGE_SCALE = 2.2
+const DOOR_DROP_POS = { x: 130, y: 222 }
 
 function randomPointInDisk(radius) {
   const angle = Math.random() * Math.PI * 2
@@ -164,6 +165,19 @@ export default function LottoPicker() {
                 )
               })}
             </div>
+            {result && (
+              <span
+                style={{
+                  left: DOOR_DROP_POS.x,
+                  top: DOOR_DROP_POS.y,
+                  transform: 'translate(-50%, -50%)',
+                  background: ballGradient(BALL_BASE_COLORS[result.index % BALL_BASE_COLORS.length]),
+                }}
+                className="absolute flex size-8 shrink-0 animate-in items-center justify-center rounded-full text-xs font-bold text-white shadow-lg shadow-black/50 fade-in-0 slide-in-from-top-20 duration-500 ease-out"
+              >
+                {result.index + 1}
+              </span>
+            )}
           </div>
           </div>
 
