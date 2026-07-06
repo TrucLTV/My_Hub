@@ -153,3 +153,24 @@ body {
 .animate-lotto-spin {
   animation: lotto-cage-spin 2.2s forwards;
 }
+
+@keyframes bee-hover {
+  0%, 100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: 5px -6px;
+  }
+  50% {
+    translate: -4px 2px;
+  }
+  75% {
+    translate: 4px 5px;
+  }
+}
+
+.animate-bee-hover {
+  animation-name: bee-hover;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
