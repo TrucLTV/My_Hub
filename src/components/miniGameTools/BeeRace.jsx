@@ -262,16 +262,13 @@ export default function BeeRace() {
 
             {/* hoa that, moi hoc sinh 1 bong */}
             {flowerPositions.map((pos, i) => (
-              <div
+              <span
                 key={`flower-${i}`}
                 style={{ left: pos.x, top: pos.y, transform: 'translate(-50%, -50%)' }}
-                className="absolute flex flex-col items-center"
+                className="absolute text-2xl leading-none"
               >
-                <span className="text-2xl leading-none">{FLOWERS[i % FLOWERS.length]}</span>
-                <span className="mt-0.5 flex size-4 items-center justify-center rounded-full bg-card text-[10px] font-bold shadow">
-                  {i + 1}
-                </span>
-              </div>
+                {FLOWERS[i % FLOWERS.length]}
+              </span>
             ))}
 
             {/* ong trang tri: cung bay khi xuat phat, chi lon von tai cho khi chua choi */}
