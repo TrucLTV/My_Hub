@@ -218,7 +218,7 @@ export default function MiniGamesPublic() {
           }
         }}
       >
-        <DialogContent className="flex h-[92vh] w-[95vw] max-w-none flex-col sm:max-w-none">
+        <DialogContent className="inset-0 top-0 left-0 flex h-screen w-screen max-w-none translate-x-0 translate-y-0 flex-col rounded-none sm:max-w-none">
           <DialogHeader>
             <DialogTitle>{activeTool?.title}</DialogTitle>
           </DialogHeader>

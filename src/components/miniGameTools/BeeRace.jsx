@@ -17,6 +17,7 @@ const MIN_FILLER_FLOWERS = 10
 const DEFAULT_FLIGHT_SECONDS = 3
 const MIN_FLIGHT_SECONDS = 1
 const MAX_FLIGHT_SECONDS = 10
+const WAYPOINT_SAMPLES = 9
 const FLOWERS = ['🌸', '🌼', '🌻', '🌺', '🌷']
 
 function randomPointInRect(rect) {
@@ -26,22 +27,36 @@ function randomPointInRect(rect) {
   }
 }
 
-// Duong bay ngoan ngoeo mo phong ong that, thay vi 1 duong thang tu diem dau den diem cuoi
-function buildZigzagPath(start, end) {
-  const steps = 4 + Math.floor(Math.random() * 2)
-  const path = [start]
-  for (let s = 1; s < steps; s++) {
-    const t = s / steps
-    const bx = start.x + (end.x - start.x) * t
-    const by = start.y + (end.y - start.y) * t
-    const spread = 20 * (1 - t) + 6
-    path.push({
-      x: bx + (Math.random() - 0.5) * spread * 2,
-      y: by + (Math.random() - 0.5) * spread * 2,
-    })
+function cubicBezierPoint(p0, p1, p2, p3, t) {
+  const mt = 1 - t
+  const a = mt * mt * mt
+  const b = 3 * mt * mt * t
+  const c = 3 * mt * t * t
+  const d = t * t * t
+  return {
+    x: a * p0.x + b * p1.x + c * p2.x + d * p3.x,
+    y: a * p0.y + b * p1.y + c * p2.y + d * p3.y,
   }
-  path.push(end)
-  return path
+}
+
+// Lay mau tren 1 duong cong Bezier ngoan ngoeo (lech sang 1 ben roi ben kia)
+// mo phong duong bay that cua ong, thay vi 1 duong thang.
+function buildWigglyWaypoints(start, end) {
+  const dx = end.x - start.x
+  const dy = end.y - start.y
+  const dist = Math.hypot(dx, dy) || 1
+  const nx = -dy / dist
+  const ny = dx / dist
+  const amp = Math.min(46, 16 + dist * 0.32)
+
+  const p1 = { x: start.x + dx * 0.33 + nx * amp, y: start.y + dy * 0.33 + ny * amp }
+  const p2 = { x: start.x + dx * 0.66 - nx * amp, y: start.y + dy * 0.66 - ny * amp }
+
+  const points = []
+  for (let s = 0; s <= WAYPOINT_SAMPLES; s++) {
+    points.push(cubicBezierPoint(start, p1, p2, end, s / WAYPOINT_SAMPLES))
+  }
+  return points
 }
 
 export default function BeeRace() {
@@ -55,13 +70,12 @@ export default function BeeRace() {
   const flowerPositions = useMemo(() => students.map(() => randomPointInRect(GROUND)), [roster?.id, students.length])
 
   const fillerBeeCount = Math.max(0, MIN_FILLER_BEES - students.length)
-  const fillerBees = useMemo(() => {
-    return Array.from({ length: fillerBeeCount }, () => ({
-      pos: randomPointInRect(SKY),
-      delay: Math.random() * 2.4,
-      duration: 2 + Math.random() * 1.4,
-    }))
+  const fillerRestPositions = useMemo(() => {
+    return Array.from({ length: fillerBeeCount }, () => randomPointInRect(SKY))
   }, [roster?.id, fillerBeeCount])
+  const fillerIdle = useMemo(() => {
+    return Array.from({ length: fillerBeeCount }, () => ({ delay: Math.random() * 2.4, duration: 2 + Math.random() * 1.4 }))
+  }, [fillerBeeCount])
 
   const fillerFlowerCount = Math.max(0, MIN_FILLER_FLOWERS - students.length)
   const fillerFlowerPositions = useMemo(() => {
@@ -74,15 +88,10 @@ export default function BeeRace() {
   const [racing, setRacing] = useState(false)
   const [beePos, setBeePos] = useState([])
   const [beeDur, setBeeDur] = useState([])
+  const [fillerPos, setFillerPos] = useState([])
+  const [fillerDur, setFillerDur] = useState([])
   const [result, setResult] = useState(null)
   const raceIdRef = useRef(0)
-
-  function stopAndSettle() {
-    raceIdRef.current += 1
-    setRacing(false)
-    setBeePos(restPositions.map((p) => p))
-    setBeeDur(students.map(() => 700))
-  }
 
   function selectRoster(id) {
     setRosterId(id)
@@ -92,12 +101,31 @@ export default function BeeRace() {
     setRacing(false)
     setBeePos([])
     setBeeDur([])
+    setFillerPos([])
+    setFillerDur([])
   }
 
   function resetDraw() {
     setDrawn(new Set())
     setResult(null)
-    stopAndSettle()
+    raceIdRef.current += 1
+    setRacing(false)
+    setBeePos(restPositions.map((p) => p))
+    setBeeDur(students.map(() => 700))
+    setFillerPos(fillerRestPositions.map((p) => p))
+    setFillerDur(fillerRestPositions.map(() => 700))
+  }
+
+  function animateAlong(myRaceId, waypoints, totalDuration, onStep) {
+    const stepMs = totalDuration / (waypoints.length - 1)
+    let step = 0
+    function advance() {
+      if (raceIdRef.current !== myRaceId) return
+      step++
+      onStep(waypoints[step], stepMs)
+      if (step < waypoints.length - 1) setTimeout(advance, stepMs)
+    }
+    setTimeout(advance, 20)
   }
 
   function launch() {
@@ -112,39 +140,49 @@ export default function BeeRace() {
 
     const winnerIdx = pool[Math.floor(Math.random() * pool.length)]
     const totalMs = flightSeconds * 1000
-    const durations = students.map((_, i) => (i === winnerIdx ? totalMs : totalMs * (1.15 + Math.random() * 0.7)))
 
-    const paths = students.map((_, i) => {
-      const start = restPositions[i]
-      const end = i === winnerIdx ? flowerPositions[i] : randomPointInRect(HOVER_ZONE)
-      return buildZigzagPath(start, end)
+    const realDurations = students.map((_, i) => (i === winnerIdx ? totalMs : totalMs * (1.15 + Math.random() * 0.7)))
+    const realWaypoints = students.map((_, i) => {
+      const target = i === winnerIdx ? flowerPositions[i] : randomPointInRect(HOVER_ZONE)
+      return buildWigglyWaypoints(restPositions[i], target)
     })
+
+    const fillerDurations = fillerRestPositions.map(() => totalMs * (1.1 + Math.random() * 0.9))
+    const fillerWaypoints = fillerRestPositions.map((pos) => buildWigglyWaypoints(pos, randomPointInRect(HOVER_ZONE)))
 
     setBeePos(restPositions.map((p) => p))
     setBeeDur(students.map(() => 0))
+    setFillerPos(fillerRestPositions.map((p) => p))
+    setFillerDur(fillerRestPositions.map(() => 0))
 
     students.forEach((_, i) => {
-      const path = paths[i]
-      const stepMs = durations[i] / (path.length - 1)
-      let step = 0
-      function advance() {
-        if (raceIdRef.current !== myRaceId) return
-        step++
+      animateAlong(myRaceId, realWaypoints[i], realDurations[i], (pos, dur) => {
         setBeePos((prev) => {
           const next = [...prev]
-          next[i] = path[step]
+          next[i] = pos
           return next
         })
         setBeeDur((prev) => {
           const next = [...prev]
-          next[i] = stepMs
+          next[i] = dur
           return next
         })
-        if (step < path.length - 1) {
-          setTimeout(advance, stepMs)
-        }
-      }
-      setTimeout(advance, 20)
+      })
+    })
+
+    fillerRestPositions.forEach((_, i) => {
+      animateAlong(myRaceId, fillerWaypoints[i], fillerDurations[i], (pos, dur) => {
+        setFillerPos((prev) => {
+          const next = [...prev]
+          next[i] = pos
+          return next
+        })
+        setFillerDur((prev) => {
+          const next = [...prev]
+          next[i] = dur
+          return next
+        })
+      })
     })
 
     setTimeout(() => {
@@ -152,7 +190,7 @@ export default function BeeRace() {
       setResult({ index: winnerIdx, name: students[winnerIdx] })
       if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(winnerIdx))
       setRacing(false)
-    }, durations[winnerIdx])
+    }, realDurations[winnerIdx])
   }
 
   return (
@@ -228,28 +266,34 @@ export default function BeeRace() {
               </div>
             ))}
 
-            {/* ong trang tri, bay lon von lien tuc, khong tham gia dua */}
-            {fillerBees.map((bee, i) => (
-              <span
-                key={`filler-bee-${i}`}
-                style={{
-                  left: bee.pos.x,
-                  top: bee.pos.y,
-                  animationDelay: `${bee.delay}s`,
-                  animationDuration: `${bee.duration}s`,
-                }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 animate-bee-hover text-lg opacity-70"
-              >
-                🐝
-              </span>
-            ))}
+            {/* ong trang tri: cung bay khi xuat phat, chi lon von tai cho khi chua choi */}
+            {fillerRestPositions.map((restPos, i) => {
+              const pos = fillerPos[i] ?? restPos
+              const dur = fillerDur[i] ?? 0
+              return (
+                <span
+                  key={`filler-bee-${i}`}
+                  style={{
+                    left: pos.x,
+                    top: pos.y,
+                    transform: 'translate(-50%, -50%)',
+                    transitionDuration: `${dur}ms`,
+                    animationDelay: `${fillerIdle[i]?.delay ?? 0}s`,
+                    animationDuration: `${fillerIdle[i]?.duration ?? 2.5}s`,
+                  }}
+                  className={cn('absolute text-lg opacity-70 transition-all ease-in-out', !racing && 'animate-bee-hover')}
+                >
+                  🐝
+                </span>
+              )
+            })}
 
             {/* ong that, gan voi hoc sinh */}
             {students.map((_, i) => {
               if (result?.index === i) return null
               const isDrawn = drawn.has(i)
               const pos = beePos[i] ?? restPositions[i]
-              const duration = beeDur[i] ?? 0
+              const dur = beeDur[i] ?? 0
               return (
                 <div
                   key={i}
@@ -257,12 +301,9 @@ export default function BeeRace() {
                     left: pos.x,
                     top: pos.y,
                     transform: 'translate(-50%, -50%)',
-                    transitionDuration: `${duration}ms`,
+                    transitionDuration: `${dur}ms`,
                   }}
-                  className={cn(
-                    'absolute flex flex-col items-center transition-all ease-in-out',
-                    !racing && !result && 'animate-bee-hover'
-                  )}
+                  className={cn('absolute flex flex-col items-center transition-all ease-in-out', !racing && !result && 'animate-bee-hover')}
                 >
                   <span className={cn('text-xl leading-none', isDrawn && 'opacity-30 grayscale')}>🐝</span>
                   <span
