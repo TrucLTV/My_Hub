@@ -130,13 +130,12 @@ export default function LottoPicker() {
                 <span
                   key={`filler-${i}`}
                   style={{
-                    left: CAGE_CENTER.x + pos.x,
-                    top: CAGE_CENTER.y + pos.y,
-                    transform: 'translate(-50%, -50%)',
+                    transform: `translate(${CAGE_CENTER.x + pos.x}px, ${CAGE_CENTER.y + pos.y}px) translate(-50%, -50%)`,
+                    willChange: 'transform',
                     background: ballGradient(BALL_BASE_COLORS[i % BALL_BASE_COLORS.length]),
                   }}
                   className={cn(
-                    'absolute shrink-0 rounded-full opacity-60 shadow-md shadow-black/40 transition-all duration-150 ease-out',
+                    'absolute top-0 left-0 shrink-0 rounded-full opacity-60 shadow-md shadow-black/40 transition-transform duration-150 ease-out',
                     BALL_SIZE_CLASS
                   )}
                 />
@@ -149,13 +148,12 @@ export default function LottoPicker() {
                   <span
                     key={i}
                     style={{
-                      left: CAGE_CENTER.x + pos.x,
-                      top: CAGE_CENTER.y + pos.y,
-                      transform: 'translate(-50%, -50%)',
+                      transform: `translate(${CAGE_CENTER.x + pos.x}px, ${CAGE_CENTER.y + pos.y}px) translate(-50%, -50%)`,
+                      willChange: 'transform',
                       background: isDrawn ? undefined : ballGradient(BALL_BASE_COLORS[i % BALL_BASE_COLORS.length]),
                     }}
                     className={cn(
-                      'absolute flex shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/40 transition-all duration-150 ease-out',
+                      'absolute top-0 left-0 flex shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/40 transition-transform duration-150 ease-out',
                       BALL_SIZE_CLASS,
                       isDrawn && 'bg-white/10 text-white/30'
                     )}

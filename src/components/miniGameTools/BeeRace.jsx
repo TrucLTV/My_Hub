@@ -294,14 +294,13 @@ export default function BeeRace() {
                 <span
                   key={`filler-bee-${i}`}
                   style={{
-                    left: pos.x,
-                    top: pos.y,
-                    transform: 'translate(-50%, -50%)',
+                    transform: `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%)`,
+                    willChange: 'transform',
                     transitionDuration: `${dur}ms`,
                     animationDelay: `${fillerIdle[i]?.delay ?? 0}s`,
                     animationDuration: `${fillerIdle[i]?.duration ?? 2.5}s`,
                   }}
-                  className={cn('absolute text-lg opacity-70 transition-all ease-linear', !racing && 'animate-bee-hover')}
+                  className={cn('absolute top-0 left-0 text-lg opacity-70 transition-transform ease-linear', !racing && 'animate-bee-hover')}
                 >
                   🐝
                 </span>
@@ -318,26 +317,31 @@ export default function BeeRace() {
                 <div
                   key={i}
                   style={{
-                    left: pos.x,
-                    top: pos.y,
-                    transform: 'translate(-50%, -50%)',
+                    transform: `translate(${pos.x}px, ${pos.y}px)`,
+                    willChange: 'transform',
                     transitionDuration: `${dur}ms`,
                   }}
                   className={cn(
-                    'absolute flex items-center justify-center transition-all ease-linear',
-                    !racing && !result && 'animate-bee-hover',
-                    isWinner && 'animate-in zoom-in-50 scale-125 duration-500'
+                    'absolute top-0 left-0 transition-transform ease-linear',
+                    !racing && !result && 'animate-bee-hover'
                   )}
                 >
-                  <span className={cn('text-xl leading-none', isDrawn && 'opacity-30 grayscale')}>🐝</span>
-                  <span
+                  <div
                     className={cn(
-                      'absolute flex size-3.5 items-center justify-center rounded-full text-[9px] font-bold shadow',
-                      isDrawn ? 'bg-white/30 text-white/60' : 'bg-amber-400 text-black'
+                      'flex -translate-x-1/2 -translate-y-1/2 items-center justify-center',
+                      isWinner && 'animate-in zoom-in-50 scale-125 duration-500'
                     )}
                   >
-                    {i + 1}
-                  </span>
+                    <span className={cn('text-xl leading-none', isDrawn && 'opacity-30 grayscale')}>🐝</span>
+                    <span
+                      className={cn(
+                        'absolute flex size-3.5 items-center justify-center rounded-full text-[9px] font-bold shadow',
+                        isDrawn ? 'bg-white/30 text-white/60' : 'bg-amber-400 text-black'
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                  </div>
                 </div>
               )
             })}
