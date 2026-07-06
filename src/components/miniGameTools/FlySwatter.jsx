@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Sparkles } from 'lucide-react'
 import { fetchRosters } from '@/lib/queries/rosters'
@@ -15,6 +15,8 @@ const DEFAULT_GROUP_SIZE = 4
 const MIN_GROUP_SIZE = 2
 const MAX_GROUP_SIZE = 20
 const SWAT_ANIM_MS = 450
+const WANDER_MIN_MS = 900
+const WANDER_MAX_MS = 2000
 
 function randomPointInRect(rect) {
   return {
@@ -34,7 +36,7 @@ export default function FlySwatter() {
     () => students.map(() => randomPointInRect(FLY_AREA)),
     [roster?.id, students.length]
   )
-  const flyIdle = useMemo(
+  const flyBuzz = useMemo(
     () => students.map(() => ({ delay: Math.random() * 2.4, duration: 1.8 + Math.random() * 1.4 })),
     [roster?.id, students.length]
   )
@@ -43,18 +45,78 @@ export default function FlySwatter() {
   const [remaining, setRemaining] = useState([])
   const [dying, setDying] = useState([])
   const [groups, setGroups] = useState([])
+  const [splats, setSplats] = useState([])
+
+  const containerRef = useRef(null)
+  const flyRefs = useRef({})
+  const wanderTimers = useRef({})
+  const initializedRosterRef = useRef(null)
+
+  function startWander(i) {
+    const el = flyRefs.current[i]
+    if (!el) return
+    const target = randomPointInRect(FLY_AREA)
+    const duration = WANDER_MIN_MS + Math.random() * (WANDER_MAX_MS - WANDER_MIN_MS)
+    el.style.transitionDuration = `${duration}ms`
+    el.style.transform = `translate(${target.x}px, ${target.y}px)`
+    wanderTimers.current[i] = setTimeout(() => startWander(i), duration)
+  }
+
+  function getLocalPosition(el) {
+    const containerEl = containerRef.current
+    if (!el || !containerEl) return { x: SCENE.width / 2, y: SCENE.height / 2 }
+    const containerRect = containerEl.getBoundingClientRect()
+    const flyRect = el.getBoundingClientRect()
+    const scale = containerRect.width / SCENE.width || 1
+    return {
+      x: (flyRect.left + flyRect.width / 2 - containerRect.left) / scale,
+      y: (flyRect.top + flyRect.height / 2 - containerRect.top) / scale,
+    }
+  }
 
   useEffect(() => {
+    Object.values(wanderTimers.current).forEach(clearTimeout)
+    wanderTimers.current = {}
+    initializedRosterRef.current = null
     setRemaining(students.map((_, i) => i))
     setGroups([])
     setDying([])
+    setSplats([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roster?.id, students.length])
+
+  useEffect(() => {
+    if (!roster || students.length === 0) return
+    if (remaining.length === 0) return
+    if (initializedRosterRef.current === roster.id) return
+    initializedRosterRef.current = roster.id
+
+    const kickoffTimers = students.map((_, i) => {
+      const el = flyRefs.current[i]
+      if (el) {
+        const start = restPositions[i]
+        el.style.transitionDuration = '0ms'
+        el.style.transform = `translate(${start.x}px, ${start.y}px)`
+      }
+      return setTimeout(() => startWander(i), Math.random() * 500)
+    })
+    return () => kickoffTimers.forEach(clearTimeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roster, students.length, remaining, restPositions])
+
+  useEffect(() => {
+    return () => Object.values(wanderTimers.current).forEach(clearTimeout)
+  }, [])
 
   function selectRoster(id) {
     setRosterId(id)
   }
 
   function resetGroups() {
+    Object.values(wanderTimers.current).forEach(clearTimeout)
+    wanderTimers.current = {}
+    initializedRosterRef.current = null
+    setSplats([])
     setRemaining(students.map((_, i) => i))
     setGroups([])
     setDying([])
@@ -66,6 +128,22 @@ export default function FlySwatter() {
     const shuffled = [...remaining].sort(() => Math.random() - 0.5)
     const batch = shuffled.slice(0, batchSize)
     const rest = shuffled.slice(batchSize)
+
+    const newSplats = batch.map((i) => {
+      const el = flyRefs.current[i]
+      const pos = getLocalPosition(el)
+      if (wanderTimers.current[i]) {
+        clearTimeout(wanderTimers.current[i])
+        delete wanderTimers.current[i]
+      }
+      if (el) {
+        el.style.transitionDuration = '0ms'
+        el.style.transform = `translate(${pos.x}px, ${pos.y}px)`
+      }
+      return { index: i, x: pos.x, y: pos.y }
+    })
+
+    setSplats((prev) => [...prev, ...newSplats])
     setDying(batch)
     setTimeout(() => {
       setRemaining(rest)
@@ -112,22 +190,35 @@ export default function FlySwatter() {
 
           <div className="relative mx-auto" style={{ width: SCENE.width * SCENE_SCALE, height: SCENE.height * SCENE_SCALE }}>
             <div
+              ref={containerRef}
               className="relative overflow-hidden rounded-2xl border-4 border-sky-300/50 bg-gradient-to-b from-sky-400/20 via-sky-500/5 to-transparent shadow-inner shadow-black/30"
               style={{ width: SCENE.width, height: SCENE.height, transform: `scale(${SCENE_SCALE})`, transformOrigin: 'top left' }}
             >
+              {splats.map((s, si) => (
+                <span
+                  key={`splat-${si}`}
+                  style={{ transform: `translate(${s.x}px, ${s.y}px) translate(-50%, -50%) rotate(90deg)` }}
+                  className="absolute top-0 left-0 text-lg leading-none opacity-40 grayscale"
+                >
+                  🪰
+                </span>
+              ))}
+
               {students.map((_, i) => {
                 const isDying = dying.includes(i)
                 if (!remaining.includes(i) && !isDying) return null
-                const pos = restPositions[i]
-                const idle = flyIdle[i]
+                const buzz = flyBuzz[i]
                 return (
                   <div
                     key={i}
-                    style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
-                    className="absolute top-0 left-0"
+                    ref={(el) => {
+                      flyRefs.current[i] = el
+                    }}
+                    className="absolute top-0 left-0 transition-transform ease-in-out"
+                    style={{ willChange: 'transform' }}
                   >
                     <div
-                      style={!isDying ? { animationDelay: `${idle.delay}s`, animationDuration: `${idle.duration}s` } : undefined}
+                      style={!isDying ? { animationDelay: `${buzz.delay}s`, animationDuration: `${buzz.duration}s` } : undefined}
                       className={cn(
                         'relative flex -translate-x-1/2 -translate-y-1/2 items-center justify-center',
                         !isDying && 'animate-bee-hover',
