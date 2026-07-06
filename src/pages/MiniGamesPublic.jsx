@@ -190,7 +190,10 @@ export default function MiniGamesPublic() {
                     game={game}
                     revealed={revealed[game.id]}
                     onRequestUnlock={() => setPromptId(game.id)}
-                    onPlay={(tool, title) => setActiveTool({ ...tool, title })}
+                    onPlay={(tool, title) => {
+                      document.documentElement.requestFullscreen?.().catch(() => {})
+                      setActiveTool({ ...tool, title })
+                    }}
                   />
                 </ContentCard>
               )
@@ -206,12 +209,20 @@ export default function MiniGamesPublic() {
         title="Mini game bị khóa"
       />
 
-      <Dialog open={activeTool !== null} onOpenChange={(v) => !v && setActiveTool(null)}>
-        <DialogContent className="sm:max-w-2xl">
+      <Dialog
+        open={activeTool !== null}
+        onOpenChange={(v) => {
+          if (!v) {
+            setActiveTool(null)
+            if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+          }
+        }}
+      >
+        <DialogContent className="flex h-[92vh] w-[95vw] max-w-none flex-col sm:max-w-none">
           <DialogHeader>
             <DialogTitle>{activeTool?.title}</DialogTitle>
           </DialogHeader>
-          {activeTool && <activeTool.component />}
+          <div className="flex-1 overflow-y-auto">{activeTool && <activeTool.component />}</div>
         </DialogContent>
       </Dialog>
     </div>
