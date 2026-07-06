@@ -14,6 +14,7 @@ const SPIN_DURATION_MS = 2200
 const MIN_CAGE_BALLS = 26
 const JITTER_INTERVAL_MS = 160
 const BALL_SIZE_CLASS = 'size-7'
+const CAGE_SCALE = 2.2
 
 function randomPointInDisk(radius) {
   const angle = Math.random() * Math.PI * 2
@@ -112,7 +113,11 @@ export default function LottoPicker() {
             Loại tên đã gọi khỏi lượt quay tiếp theo
           </label>
 
-          <div className="relative mx-auto h-[250px] w-[300px]">
+          <div className="relative mx-auto" style={{ width: 300 * CAGE_SCALE, height: 250 * CAGE_SCALE }}>
+          <div
+            className="relative"
+            style={{ width: 300, height: 250, transform: `scale(${CAGE_SCALE})`, transformOrigin: 'top left' }}
+          >
             <LottoCageStand />
             <div
               key={spinRound}
@@ -159,6 +164,7 @@ export default function LottoPicker() {
                 )
               })}
             </div>
+          </div>
           </div>
 
           <div className="flex justify-center gap-2">

@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import RosterPicker from '@/components/miniGameTools/RosterPicker'
 
 const SCENE = { width: 320, height: 230 }
+const SCENE_SCALE = 2.2
 const SKY = { xMin: 20, xMax: 300, yMin: 12, yMax: 116 }
 const HOVER_ZONE = { xMin: 26, xMax: 294, yMin: 122, yMax: 146 }
 const GROUND = { xMin: 26, xMax: 294, yMin: 154, yMax: 206 }
@@ -232,8 +233,12 @@ export default function BeeRace() {
           </div>
 
           <div
-            className="relative mx-auto overflow-hidden rounded-2xl border-4 border-sky-300/50 bg-gradient-to-b from-sky-400/30 via-sky-500/10 to-transparent shadow-inner shadow-black/30"
-            style={{ width: SCENE.width, height: SCENE.height }}
+            className="relative mx-auto"
+            style={{ width: SCENE.width * SCENE_SCALE, height: SCENE.height * SCENE_SCALE }}
+          >
+          <div
+            className="relative overflow-hidden rounded-2xl border-4 border-sky-300/50 bg-gradient-to-b from-sky-400/30 via-sky-500/10 to-transparent shadow-inner shadow-black/30"
+            style={{ width: SCENE.width, height: SCENE.height, transform: `scale(${SCENE_SCALE})`, transformOrigin: 'top left' }}
           >
             {/* mat dat / bai co */}
             <div
@@ -317,6 +322,7 @@ export default function BeeRace() {
                 </div>
               )
             })}
+          </div>
           </div>
 
           <div className="flex justify-center gap-2">
