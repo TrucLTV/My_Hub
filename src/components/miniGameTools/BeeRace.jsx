@@ -144,7 +144,9 @@ export default function BeeRace() {
 
     const realDurations = students.map((_, i) => (i === winnerIdx ? totalMs : totalMs * (1.15 + Math.random() * 0.7)))
     const realWaypoints = students.map((_, i) => {
-      const target = i === winnerIdx ? flowerPositions[i] : randomPointInRect(HOVER_ZONE)
+      const target = i === winnerIdx
+        ? { x: flowerPositions[i].x, y: flowerPositions[i].y - 14 }
+        : randomPointInRect(HOVER_ZONE)
       return buildWigglyWaypoints(restPositions[i], target)
     })
 
@@ -188,6 +190,7 @@ export default function BeeRace() {
 
     setTimeout(() => {
       if (raceIdRef.current !== myRaceId) return
+      raceIdRef.current += 1 // dung tat ca con ong con lai ngay tai vi tri hien tai
       setResult({ index: winnerIdx, name: students[winnerIdx] })
       if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(winnerIdx))
       setRacing(false)
@@ -295,7 +298,7 @@ export default function BeeRace() {
 
             {/* ong that, gan voi hoc sinh */}
             {students.map((_, i) => {
-              if (result?.index === i) return null
+              const isWinner = result?.index === i
               const isDrawn = drawn.has(i)
               const pos = beePos[i] ?? restPositions[i]
               const dur = beeDur[i] ?? 0
@@ -308,7 +311,11 @@ export default function BeeRace() {
                     transform: 'translate(-50%, -50%)',
                     transitionDuration: `${dur}ms`,
                   }}
-                  className={cn('absolute flex items-center justify-center transition-all ease-linear', !racing && !result && 'animate-bee-hover')}
+                  className={cn(
+                    'absolute flex items-center justify-center transition-all ease-linear',
+                    !racing && !result && 'animate-bee-hover',
+                    isWinner && 'animate-in zoom-in-50 scale-125 duration-500'
+                  )}
                 >
                   <span className={cn('text-xl leading-none', isDrawn && 'opacity-30 grayscale')}>🐝</span>
                   <span
