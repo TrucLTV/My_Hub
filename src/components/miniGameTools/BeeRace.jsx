@@ -29,28 +29,46 @@ function randomPointInRect(rect) {
   }
 }
 
-// Duong bay ngoan ngoeo: lech vuong goc so voi duong thang start->end theo
-// dang song sin, so vong lon von ti le voi thoi gian bay (durationMs) con
-// khoang cach thoi gian giua cac buoc (STEP_MS) luon co dinh - nen tang thoi
-// gian bay chi lam ong lon von nhieu vong hon, khong lam ong bay cham lai.
+function cubicBezierPoint(p0, p1, p2, p3, t) {
+  const mt = 1 - t
+  const a = mt * mt * mt
+  const b = 3 * mt * mt * t
+  const c = 3 * mt * t * t
+  const d = t * t * t
+  return {
+    x: a * p0.x + b * p1.x + c * p2.x + d * p3.x,
+    y: a * p0.y + b * p1.y + c * p2.y + d * p3.y,
+  }
+}
+
+// Duong bay noi nhieu doan cong chu S lai voi nhau (moi doan lech sang 1 ben
+// roi ben kia, giong duong cong ban dau). So doan cong ti le voi thoi gian
+// bay (durationMs) con khoang cach thoi gian giua cac buoc (STEP_MS) luon co
+// dinh - nen tang thoi gian bay chi lam ong lon von nhieu doan cong hon,
+// khong lam ong bay cham lai.
 function buildWigglyPath(start, end, durationMs) {
   const dx = end.x - start.x
   const dy = end.y - start.y
   const dist = Math.hypot(dx, dy) || 1
   const nx = -dy / dist
   const ny = dx / dist
-  const amp = Math.min(46, 16 + dist * 0.25)
-  const loops = Math.max(1, (durationMs / 1000) * LOOPS_PER_SECOND)
+  const amp = Math.min(46, 16 + dist * 0.32)
+  const segments = Math.max(1, Math.round((durationMs / 1000) * LOOPS_PER_SECOND))
   const samples = Math.max(24, Math.round(durationMs / STEP_MS))
+  const samplesPerSegment = Math.max(2, Math.round(samples / segments))
 
-  const points = []
-  for (let s = 0; s <= samples; s++) {
-    const t = s / samples
-    const baseX = start.x + dx * t
-    const baseY = start.y + dy * t
-    const envelope = Math.sin(t * Math.PI) // ve 0 o 2 dau mut, cao nhat o giua
-    const wiggle = Math.sin(t * Math.PI * 2 * loops) * amp * envelope
-    points.push({ x: baseX + nx * wiggle, y: baseY + ny * wiggle })
+  const points = [start]
+  for (let seg = 0; seg < segments; seg++) {
+    const segStart = { x: start.x + dx * (seg / segments), y: start.y + dy * (seg / segments) }
+    const segEnd = { x: start.x + dx * ((seg + 1) / segments), y: start.y + dy * ((seg + 1) / segments) }
+    const sdx = segEnd.x - segStart.x
+    const sdy = segEnd.y - segStart.y
+    const sign = seg % 2 === 0 ? 1 : -1
+    const p1 = { x: segStart.x + sdx * 0.33 + nx * amp * sign, y: segStart.y + sdy * 0.33 + ny * amp * sign }
+    const p2 = { x: segStart.x + sdx * 0.66 - nx * amp * sign, y: segStart.y + sdy * 0.66 - ny * amp * sign }
+    for (let s = 1; s <= samplesPerSegment; s++) {
+      points.push(cubicBezierPoint(segStart, p1, p2, segEnd, s / samplesPerSegment))
+    }
   }
   return points
 }
