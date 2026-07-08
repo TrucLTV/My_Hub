@@ -1,9 +1,6 @@
 const MATERIAL_TYPES = {
   ke_hoach_bai_day: { label: 'Kế hoạch bài dạy' },
   bai_giang_tuong_tac: { label: 'Bài giảng tương tác' },
-  ma_tran: { label: 'Ma trận' },
-  de_kiem_tra: { label: 'Đề kiểm tra' },
-  hoa_nhap: { label: 'Hòa nhập' },
 }
 
 const GRADES = {
