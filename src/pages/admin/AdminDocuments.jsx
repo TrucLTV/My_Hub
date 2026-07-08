@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionPanel } from '@/components/ui/accordion'
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,27 @@ const emptyForm = {
 
 function labelFor(dict, key) {
   return dict?.[key]?.label ?? key
+}
+
+function groupPathFor(doc) {
+  const parts = []
+  if (doc.category) parts.push(labelFor(DOCUMENT_TAXONOMY, doc.category))
+  if (doc.subject) parts.push(labelFor(DOCUMENT_TAXONOMY[doc.category]?.children, doc.subject))
+  if (doc.grade_level) parts.push(labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children, doc.grade_level))
+  if (doc.material_type) {
+    parts.push(labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children?.[doc.grade_level]?.children, doc.material_type))
+  }
+  return parts.length ? parts.join(' › ') : 'Chưa phân loại'
+}
+
+function groupDocuments(documents) {
+  const map = new Map()
+  for (const doc of documents) {
+    const key = groupPathFor(doc)
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(doc)
+  }
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0], 'vi'))
 }
 
 function VisibilityBadge({ row }) {
@@ -294,41 +316,47 @@ export default function AdminDocuments() {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {documents.map((doc) => (
-          <div key={doc.id} className="border rounded-md p-3 space-y-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
-              <p className="font-medium">{doc.title}</p>
-              <VisibilityBadge row={doc} />
-            </div>
-            {(doc.category || doc.subject || doc.grade_level || doc.material_type) && (
-              <div className="flex flex-wrap gap-1">
-                {doc.category && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY, doc.category)}</Badge>}
-                {doc.subject && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children, doc.subject)}</Badge>}
-                {doc.grade_level && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children, doc.grade_level)}</Badge>}
-                {doc.material_type && <Badge variant="secondary">{labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children?.[doc.grade_level]?.children, doc.material_type)}</Badge>}
-              </div>
-            )}
-            {doc.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {doc.tags.map((tag) => (
-                  <Badge key={tag} variant="outline">{tag}</Badge>
+      <Accordion defaultValue={[]}>
+        {groupDocuments(documents).map(([groupLabel, docs]) => (
+          <AccordionItem key={groupLabel} value={groupLabel}>
+            <AccordionTrigger>
+              <span className="flex flex-1 items-baseline justify-between gap-2">
+                <span>{groupLabel}</span>
+                <span className="text-xs font-normal text-muted-foreground">{docs.length} tài liệu</span>
+              </span>
+            </AccordionTrigger>
+            <AccordionPanel>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {docs.map((doc) => (
+                  <div key={doc.id} className="border rounded-md p-3 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
+                      <p className="font-medium">{doc.title}</p>
+                      <VisibilityBadge row={doc} />
+                    </div>
+                    {doc.tags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {doc.tags.map((tag) => (
+                          <Badge key={tag} variant="outline">{tag}</Badge>
+                        ))}
+                      </div>
+                    )}
+                    {doc.file_url && (
+                      <Button variant="link" size="sm" className="px-0 h-auto block" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
+                        Tải xuống ({doc.file_type})
+                      </Button>
+                    )}
+                    <div className="flex gap-2 pt-1">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(doc)}>Sửa</Button>
+                      <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(doc.id)}>Xóa</Button>
+                    </div>
+                  </div>
                 ))}
               </div>
-            )}
-            {doc.file_url && (
-              <Button variant="link" size="sm" className="px-0 h-auto block" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
-                Tải xuống ({doc.file_type})
-              </Button>
-            )}
-            <div className="flex gap-2 pt-1">
-              <Button variant="outline" size="sm" onClick={() => openEdit(doc)}>Sửa</Button>
-              <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(doc.id)}>Xóa</Button>
-            </div>
-          </div>
+            </AccordionPanel>
+          </AccordionItem>
         ))}
-      </div>
+      </Accordion>
     </div>
   )
 }
