@@ -12,6 +12,7 @@ import {
 } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY } from '@/lib/documentTaxonomy'
 import BulkDocumentUploadDialog from '@/pages/admin/BulkDocumentUploadDialog'
+import AccentCard from '@/components/AccentCard'
 import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -339,7 +340,7 @@ export default function AdminDocuments() {
             <AccordionPanel>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {docs.map((doc) => (
-                  <div key={doc.id} className="border rounded-md p-3 space-y-2">
+                  <AccentCard key={doc.id} accent="emerald" className="cursor-default gap-2 p-3">
                     <div className="flex items-center gap-2 flex-wrap">
                       {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
                       <p className="font-medium">{doc.title}</p>
@@ -361,7 +362,7 @@ export default function AdminDocuments() {
                       <Button variant="outline" size="sm" onClick={() => openEdit(doc)}>Sửa</Button>
                       <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(doc.id)}>Xóa</Button>
                     </div>
-                  </div>
+                  </AccentCard>
                 ))}
               </div>
             </AccordionPanel>
