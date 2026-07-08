@@ -32,6 +32,12 @@ export async function createDocument(document) {
   return data
 }
 
+export async function bulkCreateDocuments(documents) {
+  const { data, error } = await supabase.from('documents').insert(documents).select()
+  if (error) throw error
+  return data
+}
+
 export async function updateDocument(id, updates) {
   const { data, error } = await supabase
     .from('documents')

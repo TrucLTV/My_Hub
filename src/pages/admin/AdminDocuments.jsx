@@ -9,6 +9,7 @@ import {
   getDocumentSignedUrl,
 } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY } from '@/lib/documentTaxonomy'
+import BulkDocumentUploadDialog from '@/pages/admin/BulkDocumentUploadDialog'
 import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -147,6 +148,8 @@ export default function AdminDocuments() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Quản lý tài liệu</h1>
+        <div className="flex gap-2">
+        <BulkDocumentUploadDialog />
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button onClick={openCreate} />}>
             + Tài liệu mới
@@ -268,6 +271,7 @@ export default function AdminDocuments() {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
