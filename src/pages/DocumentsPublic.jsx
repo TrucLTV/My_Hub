@@ -182,17 +182,17 @@ function TwoLevelGrid({ groups, onOpen }) {
   const colors = accentClasses[DOC_ACCENT]
   if (!groups.length) return <p className="text-muted-foreground">Chưa có mục nào.</p>
   return (
-    <div className="space-y-6 py-6">
+    <div className="flex flex-wrap justify-center gap-6 py-6">
       {groups.map(({ key: parentKey, label: parentLabel, children }) => (
-        <div key={parentKey} className="space-y-3">
-          <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{parentLabel}</h3>
-          <div className="flex flex-wrap gap-4">
+        <div key={parentKey} className="w-36 space-y-3 sm:w-40">
+          <h3 className="text-center text-sm font-semibold tracking-wide text-muted-foreground uppercase">{parentLabel}</h3>
+          <div className="flex flex-col gap-3">
             {children.map(({ key: childKey, label: childLabel, count }) => (
               <AccentCard
                 key={childKey}
                 accent={DOC_ACCENT}
                 onClick={() => onOpen([parentKey, childKey])}
-                className="w-36 cursor-pointer items-center gap-2 p-4 text-center sm:w-40"
+                className="cursor-pointer items-center gap-2 p-4 text-center"
               >
                 <span className={`flex size-12 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
                   <Folder className="size-6" />
