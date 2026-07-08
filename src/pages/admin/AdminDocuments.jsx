@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft } from 'lucide-react'
 import {
   fetchAllDocuments,
   createDocument,
@@ -73,6 +75,7 @@ function VisibilityBadge({ row }) {
 }
 
 export default function AdminDocuments() {
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: documents, isLoading, error } = useQuery({
     queryKey: ['documents', 'all'],
@@ -168,11 +171,15 @@ export default function AdminDocuments() {
 
   return (
     <div className="space-y-4">
+      <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+        <ArrowLeft className="size-4" /> Quay lại
+      </Button>
+
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Quản lý tài liệu</h1>
         <div className="flex gap-2">
-        <BulkDocumentUploadDialog />
-        <Dialog open={open} onOpenChange={setOpen}>
+          <BulkDocumentUploadDialog />
+          <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button onClick={openCreate} />}>
             + Tài liệu mới
           </DialogTrigger>
@@ -316,9 +323,13 @@ export default function AdminDocuments() {
         </div>
       </div>
 
-      <Accordion defaultValue={[]}>
+      <Accordion defaultValue={[]} className="space-y-3">
         {groupDocuments(documents).map(([groupLabel, docs]) => (
-          <AccordionItem key={groupLabel} value={groupLabel}>
+          <AccordionItem
+            key={groupLabel}
+            value={groupLabel}
+            className="rounded-lg border border-border bg-card px-4 shadow-sm"
+          >
             <AccordionTrigger>
               <span className="flex flex-1 items-baseline justify-between gap-2">
                 <span>{groupLabel}</span>
