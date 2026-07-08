@@ -172,7 +172,7 @@ export default function AdminDocuments() {
 
   return (
     <div className="space-y-4">
-      <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+      <Button variant="outline" size="sm" onClick={() => navigate('/admin')}>
         <ArrowLeft className="size-4" /> Quay lại
       </Button>
 
