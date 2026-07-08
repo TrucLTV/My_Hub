@@ -54,8 +54,19 @@ export async function deleteDocument(id) {
   if (error) throw error
 }
 
+const COMBINING_DIACRITICS = new RegExp('[̀-ͯ]', 'g')
+
+function toSafeStorageName(filename) {
+  return filename
+    .normalize('NFD')
+    .replace(COMBINING_DIACRITICS, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+}
+
 export async function uploadDocumentFile(file) {
-  const path = `${crypto.randomUUID()}-${file.name}`
+  const path = `${crypto.randomUUID()}-${toSafeStorageName(file.name)}`
   const { error } = await supabase.storage.from('documents').upload(path, file)
   if (error) throw error
   return path

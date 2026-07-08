@@ -23,6 +23,7 @@ export default function BulkDocumentUploadDialog() {
   const [parsing, setParsing] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState({ done: 0, total: 0 })
+  const [uploadError, setUploadError] = useState('')
 
   const subjectOptions = form.category ? DOCUMENT_TAXONOMY[form.category]?.children : null
   const gradeOptions = form.subject ? subjectOptions?.[form.subject]?.children : null
@@ -32,6 +33,7 @@ export default function BulkDocumentUploadDialog() {
     setForm(emptyForm)
     setZipEntries(null)
     setParseError('')
+    setUploadError('')
     setProgress({ done: 0, total: 0 })
   }
 
@@ -56,6 +58,7 @@ export default function BulkDocumentUploadDialog() {
   async function handleBulkUpload() {
     if (!zipEntries || zipEntries.length === 0) return
     setUploading(true)
+    setUploadError('')
     setProgress({ done: 0, total: zipEntries.length })
     try {
       const payloads = []
@@ -80,6 +83,8 @@ export default function BulkDocumentUploadDialog() {
       queryClient.invalidateQueries({ queryKey: ['documents'] })
       setOpen(false)
       resetState()
+    } catch (err) {
+      setUploadError(err.message ?? 'Có lỗi khi tải lên. Thử lại.')
     } finally {
       setUploading(false)
     }
@@ -219,6 +224,8 @@ export default function BulkDocumentUploadDialog() {
               </SelectContent>
             </Select>
           </div>
+
+          {uploadError && <p className="text-sm text-destructive">Lỗi: {uploadError}</p>}
 
           <Button
             className="w-full"
