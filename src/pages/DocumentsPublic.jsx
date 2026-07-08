@@ -176,6 +176,38 @@ function FolderGrid({ entries, onOpen }) {
   )
 }
 
+// Khi các mục con (VD: Khối 6-9) lại có thêm 1 lớp con riêng (VD: 2 nhóm tài liệu),
+// gộp cả 2 lớp vào chung 1 trang thay vì bắt bấm thêm 1 lần nữa mới thấy nhóm con.
+function TwoLevelGrid({ groups, onOpen }) {
+  const colors = accentClasses[DOC_ACCENT]
+  if (!groups.length) return <p className="text-muted-foreground">Chưa có mục nào.</p>
+  return (
+    <div className="space-y-6 py-6">
+      {groups.map(({ key: parentKey, label: parentLabel, children }) => (
+        <div key={parentKey} className="space-y-3">
+          <h3 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{parentLabel}</h3>
+          <div className="flex flex-wrap gap-4">
+            {children.map(({ key: childKey, label: childLabel, count }) => (
+              <AccentCard
+                key={childKey}
+                accent={DOC_ACCENT}
+                onClick={() => onOpen([parentKey, childKey])}
+                className="w-36 cursor-pointer items-center gap-2 p-4 text-center sm:w-40"
+              >
+                <span className={`flex size-12 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
+                  <Folder className="size-6" />
+                </span>
+                <p className="w-full truncate font-medium text-sm">{childLabel}</p>
+                <p className="text-xs text-muted-foreground">{count} tài liệu</p>
+              </AccentCard>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function DocumentsPublic() {
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -188,6 +220,8 @@ export default function DocumentsPublic() {
 
   const currentNode = validPath.length === 0 ? { children: DOCUMENT_TAXONOMY } : getTaxonomyNode(validPath)
   const isLeaf = !currentNode?.children
+  const childNodes = isLeaf ? [] : Object.values(currentNode.children)
+  const childrenAreTwoLevel = childNodes.length > 0 && childNodes.every((node) => node.children)
   const filters = pathToFilters(validPath)
 
   const [search, setSearch] = useState('')
@@ -203,6 +237,10 @@ export default function DocumentsPublic() {
 
   function openChild(key) {
     openPath([...validPath, key])
+  }
+
+  function openChildPath(keys) {
+    openPath([...validPath, ...keys])
   }
 
   function openPath(path) {
@@ -246,7 +284,23 @@ export default function DocumentsPublic() {
                 <RootColumns documents={documents ?? []} onOpenPath={openPath} />
               </>
             )}
-            {!isLoading && validPath.length > 0 && (
+            {!isLoading && validPath.length > 0 && childrenAreTwoLevel && (
+              <TwoLevelGrid
+                groups={Object.entries(currentNode.children).map(([parentKey, parentNode]) => ({
+                  key: parentKey,
+                  label: parentNode.label,
+                  children: Object.entries(parentNode.children).map(([childKey, childNode]) => ({
+                    key: childKey,
+                    label: childNode.label,
+                    count: (documents ?? []).filter(
+                      (d) => matchesChild(d, validPath.length, parentKey) && matchesChild(d, validPath.length + 1, childKey)
+                    ).length,
+                  })),
+                }))}
+                onOpen={openChildPath}
+              />
+            )}
+            {!isLoading && validPath.length > 0 && !childrenAreTwoLevel && (
               <FolderGrid
                 entries={Object.entries(currentNode.children).map(([key, node]) => ({
                   key,
