@@ -129,7 +129,11 @@ export default function BulkDocumentUploadDialog() {
               value={form.category}
               onValueChange={(v) => setForm({ ...form, category: v, subject: '', grade_level: '', material_type: '' })}
             >
-              <SelectTrigger className="w-full"><SelectValue placeholder="Chọn loại" /></SelectTrigger>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn loại">
+                  {() => DOCUMENT_TAXONOMY[form.category]?.label ?? 'Chọn loại'}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {Object.entries(DOCUMENT_TAXONOMY).map(([key, node]) => (
                   <SelectItem key={key} value={key}>{node.label}</SelectItem>
@@ -145,7 +149,11 @@ export default function BulkDocumentUploadDialog() {
                 value={form.subject}
                 onValueChange={(v) => setForm({ ...form, subject: v, grade_level: '', material_type: '' })}
               >
-                <SelectTrigger className="w-full"><SelectValue placeholder="Chọn môn" /></SelectTrigger>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn môn">
+                    {() => subjectOptions[form.subject]?.label ?? 'Chọn môn'}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(subjectOptions).map(([key, node]) => (
                     <SelectItem key={key} value={key}>{node.label}</SelectItem>
@@ -159,7 +167,11 @@ export default function BulkDocumentUploadDialog() {
             <div className="space-y-1">
               <Label>Khối</Label>
               <Select value={form.grade_level} onValueChange={(v) => setForm({ ...form, grade_level: v, material_type: '' })}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Chọn khối" /></SelectTrigger>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn khối">
+                    {() => gradeOptions[form.grade_level]?.label ?? 'Chọn khối'}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(gradeOptions).map(([key, node]) => (
                     <SelectItem key={key} value={key}>{node.label}</SelectItem>
@@ -173,7 +185,11 @@ export default function BulkDocumentUploadDialog() {
             <div className="space-y-1">
               <Label>Nhóm tài liệu</Label>
               <Select value={form.material_type} onValueChange={(v) => setForm({ ...form, material_type: v })}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Chọn nhóm" /></SelectTrigger>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn nhóm">
+                    {() => materialOptions[form.material_type]?.label ?? 'Chọn nhóm'}
+                  </SelectValue>
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(materialOptions).map(([key, node]) => (
                     <SelectItem key={key} value={key}>{node.label}</SelectItem>
@@ -191,7 +207,11 @@ export default function BulkDocumentUploadDialog() {
           <div className="space-y-1">
             <Label>Hiển thị</Label>
             <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-full">
+                <SelectValue>
+                  {() => VISIBILITY_OPTIONS.find((opt) => opt.value === form.visibility)?.label}
+                </SelectValue>
+              </SelectTrigger>
               <SelectContent>
                 {VISIBILITY_OPTIONS.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>

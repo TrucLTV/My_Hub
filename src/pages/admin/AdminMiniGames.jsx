@@ -249,7 +249,11 @@ export default function AdminMiniGames() {
               <div className="space-y-1">
                 <Label>Hiển thị</Label>
                 <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {() => VISIBILITY_OPTIONS.find((opt) => opt.value === form.visibility)?.label}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {VISIBILITY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>

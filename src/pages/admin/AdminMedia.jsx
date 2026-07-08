@@ -16,6 +16,13 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
+const STATUS_LABELS = {
+  backlog: 'Chưa xem',
+  in_progress: 'Đang xem',
+  completed: 'Hoàn thành',
+  dropped: 'Bỏ dở',
+}
+
 const emptyForm = {
   title: '',
   type: 'movie',
@@ -132,7 +139,9 @@ export default function AdminMedia() {
                 <div className="space-y-1">
                   <Label>Loại</Label>
                   <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>{() => (form.type === 'game' ? 'Game' : 'Phim')}</SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="movie">Phim</SelectItem>
                       <SelectItem value="game">Game</SelectItem>
@@ -142,7 +151,9 @@ export default function AdminMedia() {
                 <div className="space-y-1">
                   <Label>Trạng thái</Label>
                   <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                    <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-full">
+                      <SelectValue>{() => STATUS_LABELS[form.status]}</SelectValue>
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="backlog">Chưa xem</SelectItem>
                       <SelectItem value="in_progress">Đang xem</SelectItem>
@@ -180,7 +191,11 @@ export default function AdminMedia() {
               <div className="space-y-1">
                 <Label>Hiển thị</Label>
                 <Select value={form.visibility} onValueChange={(v) => setForm({ ...form, visibility: v })}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-full">
+                    <SelectValue>
+                      {() => VISIBILITY_OPTIONS.find((opt) => opt.value === form.visibility)?.label}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {VISIBILITY_OPTIONS.map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
