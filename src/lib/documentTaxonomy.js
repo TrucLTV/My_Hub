@@ -15,7 +15,7 @@ export const DOCUMENT_TAXONOMY = {
     label: 'Giảng dạy',
     children: {
       tin_hoc: { label: 'Tin học', children: GRADES },
-      hdtn: { label: 'HĐTN' },
+      hdtn: { label: 'HĐTN', children: GRADES },
       lap_trinh: { label: 'Lập trình' },
       robot: { label: 'Robot' },
     },
