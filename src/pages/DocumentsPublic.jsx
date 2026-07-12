@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock, Download, GraduationCap, BookOpen, Monitor, Bot, Code2, Sparkles } from 'lucide-react'
+import { Folder, ChevronRight, Lock, Download, GraduationCap, BookOpen, Sparkles } from 'lucide-react'
 import { fetchPublicDocuments, getDocumentSignedUrl, unlockDocumentPath } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
 import { accentClasses } from '@/lib/accentColors'
@@ -15,6 +15,7 @@ import PageBanner from '@/components/PageBanner'
 import AccentCard from '@/components/AccentCard'
 import PasswordPrompt from '@/components/PasswordPrompt'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const PATH_PARAMS = ['loai', 'mon', 'khoi', 'nhom']
 const DOC_ACCENT = 'emerald'
@@ -58,12 +59,6 @@ function DecorativeBackground({ accent }) {
   )
 }
 
-const SUBJECT_ICONS = {
-  tin_hoc: Monitor,
-  robot: Bot,
-  lap_trinh: Code2,
-}
-
 function countDocs(documents, filters) {
   return documents.filter((d) => Object.entries(filters).every(([k, v]) => d[k] === v)).length
 }
@@ -103,9 +98,9 @@ function RecentDocuments({ documents }) {
 }
 
 function RootColumns({ documents, onOpenPath }) {
-  const colors = accentClasses[GIANG_DAY_ACCENT]
   const giangDaySubjects = DOCUMENT_TAXONOMY.giang_day.children
   const hocTapCount = countDocs(documents, { category: 'hoc_tap' })
+  const [subject, setSubject] = useState('')
 
   return (
     <div className="grid gap-4 py-6 md:grid-cols-2">
@@ -113,25 +108,27 @@ function RootColumns({ documents, onOpenPath }) {
         <div className="flex items-center gap-2 bg-gradient-to-r from-violet-800 to-violet-950 px-4 py-3 font-semibold text-white">
           <GraduationCap className="size-5" /> Giảng dạy
         </div>
-        <div className="flex flex-wrap justify-center gap-3 bg-card p-4">
-          {Object.entries(giangDaySubjects).map(([key, node]) => {
-            const Icon = SUBJECT_ICONS[key] ?? Folder
-            return (
-              <button
-                key={key}
-                onClick={() => onOpenPath(['giang_day', key])}
-                className="flex w-28 cursor-pointer flex-col items-center gap-2 rounded-lg p-3 text-center transition-all duration-200 hover:-translate-y-1 hover:bg-accent"
-              >
-                <span className={`flex size-11 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
-                  <Icon className="size-5" />
-                </span>
-                <p className="w-full truncate text-sm font-medium">{node.label}</p>
-                <p className="text-xs text-muted-foreground">
-                  {countDocs(documents, { category: 'giang_day', subject: key })} tài liệu
-                </p>
-              </button>
-            )
-          })}
+        <div className="bg-card p-4">
+          <Select
+            value={subject}
+            onValueChange={(key) => {
+              setSubject(key)
+              onOpenPath(['giang_day', key])
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn môn học...">
+                {() => giangDaySubjects[subject]?.label ?? 'Chọn môn học...'}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(giangDaySubjects).map(([key, node]) => (
+                <SelectItem key={key} value={key}>
+                  {node.label} — {countDocs(documents, { category: 'giang_day', subject: key })} tài liệu
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
