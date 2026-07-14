@@ -10,7 +10,7 @@ import {
   uploadDocumentFile,
   getDocumentSignedUrl,
 } from '@/lib/queries/documents'
-import { DOCUMENT_TAXONOMY } from '@/lib/documentTaxonomy'
+import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters } from '@/lib/documentTaxonomy'
 import BulkDocumentUploadDialog from '@/pages/admin/BulkDocumentUploadDialog'
 import AccentCard from '@/components/AccentCard'
 import SearchBar from '@/components/SearchBar'
@@ -94,6 +94,150 @@ function matchesSearch(doc, query) {
   const q = query.toLowerCase()
   if (doc.title.toLowerCase().includes(q)) return true
   return (doc.tags ?? []).some((tag) => tag.toLowerCase().includes(q))
+}
+
+// Danh sách môn phẳng để chọn ở dropdown duyệt tài liệu (giống trang public),
+// bất kể môn đó nằm ở "Giảng dạy" hay là "Học tập".
+const SUBJECT_GROUPS = [
+  { value: 'tin_hoc', label: 'Tin học', path: ['giang_day', 'tin_hoc'] },
+  { value: 'hdtn', label: 'HĐTN', path: ['giang_day', 'hdtn'] },
+  { value: 'lap_trinh', label: 'Lập trình', path: ['giang_day', 'lap_trinh'] },
+  { value: 'robot', label: 'Robot', path: ['giang_day', 'robot'] },
+  { value: 'hoc_tap', label: 'Học tập', path: ['hoc_tap'] },
+  { value: 'unclassified', label: UNCLASSIFIED_LABEL, path: null },
+]
+
+function docsForPath(documents, path) {
+  if (!path) return documents.filter((d) => !d.category)
+  const filters = pathToFilters(path)
+  return documents.filter((doc) => Object.entries(filters).every(([k, v]) => doc[k] === v))
+}
+
+function DocumentCard({ doc, onEdit, onDelete, onDownload }) {
+  return (
+    <AccentCard accent="emerald" className="cursor-default gap-2 p-3">
+      <div className="flex items-center gap-2 flex-wrap">
+        {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
+        <p className="font-medium">{doc.title}</p>
+        <VisibilityBadge row={doc} />
+      </div>
+      {doc.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {doc.tags.map((tag) => (
+            <Badge key={tag} variant="outline">{tag}</Badge>
+          ))}
+        </div>
+      )}
+      {doc.file_url && (
+        <Button variant="link" size="sm" className="px-0 h-auto block" onClick={() => onDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
+          Tải xuống ({doc.file_type})
+        </Button>
+      )}
+      <div className="flex gap-2 pt-1">
+        <Button variant="outline" size="sm" onClick={() => onEdit(doc)}>Sửa</Button>
+        <Button variant="destructive" size="sm" onClick={() => onDelete(doc.id)}>Xóa</Button>
+      </div>
+    </AccentCard>
+  )
+}
+
+// Duyệt tài liệu theo môn -> khối -> nhóm bài, giống cách trang public tổ chức thư mục.
+function SubjectBrowser({ documents, onEdit, onDelete, onDownload }) {
+  const [path, setPath] = useState(null)
+
+  if (path === null) {
+    return (
+      <div className="max-w-sm space-y-1">
+        <Label>Chọn môn để xem tài liệu</Label>
+        <Select
+          value=""
+          onValueChange={(v) => {
+            const group = SUBJECT_GROUPS.find((g) => g.value === v)
+            setPath(group.path ?? 'unclassified')
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn môn..." />
+          </SelectTrigger>
+          <SelectContent>
+            {SUBJECT_GROUPS.map((g) => (
+              <SelectItem key={g.value} value={g.value}>
+                {g.label} — {docsForPath(documents, g.path).length} tài liệu
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  }
+
+  if (path === 'unclassified') {
+    const docs = docsForPath(documents, null)
+    return (
+      <div className="space-y-3">
+        <Button variant="ghost" size="sm" onClick={() => setPath(null)}>← Đổi môn khác</Button>
+        <p className="text-sm font-medium text-muted-foreground">{UNCLASSIFIED_LABEL} — {docs.length} tài liệu</p>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {docs.map((doc) => (
+            <DocumentCard key={doc.id} doc={doc} onEdit={onEdit} onDelete={onDelete} onDownload={onDownload} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const node = getTaxonomyNode(path)
+  const isLeaf = !node?.children
+  const crumbLabel = path.map((_, i) => getTaxonomyNode(path.slice(0, i + 1))?.label).join(' › ')
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => setPath(null)}>← Đổi môn khác</Button>
+        {path.length > 1 && (
+          <Button variant="ghost" size="sm" onClick={() => setPath(path.slice(0, -1))}>
+            ← Quay lại {getTaxonomyNode(path.slice(0, -1))?.label}
+          </Button>
+        )}
+        <span className="text-sm text-muted-foreground">{crumbLabel}</span>
+      </div>
+
+      {isLeaf ? (
+        <>
+          <p className="text-sm font-medium text-muted-foreground">{docsForPath(documents, path).length} tài liệu</p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {docsForPath(documents, path).map((doc) => (
+              <DocumentCard key={doc.id} doc={doc} onEdit={onEdit} onDelete={onDelete} onDownload={onDownload} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-wrap justify-center gap-6 py-2">
+          {Object.entries(node.children).map(([gradeKey, gradeNode]) => (
+            <div key={gradeKey} className="w-40 space-y-3">
+              <h3 className="text-center text-sm font-semibold tracking-wide text-muted-foreground uppercase">{gradeNode.label}</h3>
+              <div className="flex flex-col gap-3">
+                {Object.entries(gradeNode.children).map(([materialKey, materialNode]) => (
+                  <AccentCard
+                    key={materialKey}
+                    accent="emerald"
+                    onClick={() => setPath([...path, gradeKey, materialKey])}
+                    className="cursor-pointer items-center gap-2 p-4 text-center"
+                  >
+                    <FolderOpen className="size-8 text-emerald-300" />
+                    <p className="text-sm font-medium">{materialNode.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {docsForPath(documents, [...path, gradeKey, materialKey]).length} tài liệu
+                    </p>
+                  </AccentCard>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function AdminDocuments() {
@@ -369,60 +513,52 @@ export default function AdminDocuments() {
 
       <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên tài liệu hoặc tag..." />
 
-      {groups.length === 0 && (
-        <p className="text-muted-foreground">
-          {isSearching ? `Không tìm thấy tài liệu nào khớp với "${search}".` : 'Chưa có tài liệu nào.'}
-        </p>
+      {isSearching ? (
+        <>
+          {groups.length === 0 && (
+            <p className="text-muted-foreground">Không tìm thấy tài liệu nào khớp với "{search}".</p>
+          )}
+          <Accordion value={openGroups} onValueChange={setManualOpenGroups} className="space-y-3">
+            {groups.map(([groupLabel, docs]) => (
+              <AccordionItem
+                key={groupLabel}
+                value={groupLabel}
+                className={cn(
+                  'rounded-lg border px-4 shadow-sm',
+                  groupLabel === UNCLASSIFIED_LABEL ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card'
+                )}
+              >
+                <AccordionTrigger>
+                  <span className="flex flex-1 items-baseline justify-between gap-2">
+                    <span className={cn(groupLabel === UNCLASSIFIED_LABEL && 'text-amber-500')}>{groupLabel}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{docs.length} tài liệu</span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionPanel>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {docs.map((doc) => (
+                      <DocumentCard
+                        key={doc.id}
+                        doc={doc}
+                        onEdit={openEdit}
+                        onDelete={(id) => deleteMutation.mutate(id)}
+                        onDownload={handleDownload}
+                      />
+                    ))}
+                  </div>
+                </AccordionPanel>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </>
+      ) : (
+        <SubjectBrowser
+          documents={documents}
+          onEdit={openEdit}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          onDownload={handleDownload}
+        />
       )}
-
-      <Accordion value={openGroups} onValueChange={setManualOpenGroups} className="space-y-3">
-        {groups.map(([groupLabel, docs]) => (
-          <AccordionItem
-            key={groupLabel}
-            value={groupLabel}
-            className={cn(
-              'rounded-lg border px-4 shadow-sm',
-              groupLabel === UNCLASSIFIED_LABEL ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card'
-            )}
-          >
-            <AccordionTrigger>
-              <span className="flex flex-1 items-baseline justify-between gap-2">
-                <span className={cn(groupLabel === UNCLASSIFIED_LABEL && 'text-amber-500')}>{groupLabel}</span>
-                <span className="text-xs font-normal text-muted-foreground">{docs.length} tài liệu</span>
-              </span>
-            </AccordionTrigger>
-            <AccordionPanel>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {docs.map((doc) => (
-                  <AccentCard key={doc.id} accent="emerald" className="cursor-default gap-2 p-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
-                      <p className="font-medium">{doc.title}</p>
-                      <VisibilityBadge row={doc} />
-                    </div>
-                    {doc.tags?.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {doc.tags.map((tag) => (
-                          <Badge key={tag} variant="outline">{tag}</Badge>
-                        ))}
-                      </div>
-                    )}
-                    {doc.file_url && (
-                      <Button variant="link" size="sm" className="px-0 h-auto block" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
-                        Tải xuống ({doc.file_type})
-                      </Button>
-                    )}
-                    <div className="flex gap-2 pt-1">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(doc)}>Sửa</Button>
-                      <Button variant="destructive" size="sm" onClick={() => deleteMutation.mutate(doc.id)}>Xóa</Button>
-                    </div>
-                  </AccentCard>
-                ))}
-              </div>
-            </AccordionPanel>
-          </AccordionItem>
-        ))}
-      </Accordion>
     </div>
   )
 }
