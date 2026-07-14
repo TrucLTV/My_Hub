@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, FileText, Globe, Lock, EyeOff, FolderOpen } from 'lucide-react'
 import {
   fetchAllDocuments,
   createDocument,
@@ -13,6 +13,8 @@ import {
 import { DOCUMENT_TAXONOMY } from '@/lib/documentTaxonomy'
 import BulkDocumentUploadDialog from '@/pages/admin/BulkDocumentUploadDialog'
 import AccentCard from '@/components/AccentCard'
+import SearchBar from '@/components/SearchBar'
+import { cn } from '@/lib/utils'
 import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +30,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+
+const UNCLASSIFIED_LABEL = 'Chưa phân loại'
 
 const emptyForm = {
   title: '',
@@ -55,7 +59,7 @@ function groupPathFor(doc) {
   if (doc.material_type) {
     parts.push(labelFor(DOCUMENT_TAXONOMY[doc.category]?.children?.[doc.subject]?.children?.[doc.grade_level]?.children, doc.material_type))
   }
-  return parts.length ? parts.join(' › ') : 'Chưa phân loại'
+  return parts.length ? parts.join(' › ') : UNCLASSIFIED_LABEL
 }
 
 function groupDocuments(documents) {
@@ -75,6 +79,23 @@ function VisibilityBadge({ row }) {
   return <Badge variant="secondary">Private</Badge>
 }
 
+function StatPill({ icon: Icon, label, count }) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="font-semibold">{count}</span>
+    </div>
+  )
+}
+
+function matchesSearch(doc, query) {
+  if (!query) return true
+  const q = query.toLowerCase()
+  if (doc.title.toLowerCase().includes(q)) return true
+  return (doc.tags ?? []).some((tag) => tag.toLowerCase().includes(q))
+}
+
 export default function AdminDocuments() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -88,6 +109,8 @@ export default function AdminDocuments() {
   const [form, setForm] = useState(emptyForm)
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [search, setSearch] = useState('')
+  const [manualOpenGroups, setManualOpenGroups] = useState([])
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['documents'] })
 
@@ -169,6 +192,16 @@ export default function AdminDocuments() {
 
   if (isLoading) return <p>Đang tải...</p>
   if (error) return <p className="text-destructive">Lỗi: {error.message}</p>
+
+  const publicCount = documents.filter((d) => d.is_public).length
+  const lockedCount = documents.filter((d) => d.is_locked).length
+  const privateCount = documents.length - publicCount - lockedCount
+  const unclassifiedCount = documents.filter((d) => !d.category).length
+
+  const isSearching = search.trim().length > 0
+  const filteredDocuments = documents.filter((doc) => matchesSearch(doc, search.trim()))
+  const groups = groupDocuments(filteredDocuments)
+  const openGroups = isSearching ? groups.map(([label]) => label) : manualOpenGroups
 
   return (
     <div className="space-y-4">
@@ -324,16 +357,37 @@ export default function AdminDocuments() {
         </div>
       </div>
 
-      <Accordion defaultValue={[]} className="space-y-3">
-        {groupDocuments(documents).map(([groupLabel, docs]) => (
+      <div className="flex flex-wrap gap-2">
+        <StatPill icon={FileText} label="Tổng số" count={documents.length} />
+        <StatPill icon={Globe} label="Công khai" count={publicCount} />
+        <StatPill icon={Lock} label="Khóa tải" count={lockedCount} />
+        <StatPill icon={EyeOff} label="Ẩn hoàn toàn" count={privateCount} />
+        {unclassifiedCount > 0 && (
+          <StatPill icon={FolderOpen} label="Chưa phân loại" count={unclassifiedCount} />
+        )}
+      </div>
+
+      <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên tài liệu hoặc tag..." />
+
+      {groups.length === 0 && (
+        <p className="text-muted-foreground">
+          {isSearching ? `Không tìm thấy tài liệu nào khớp với "${search}".` : 'Chưa có tài liệu nào.'}
+        </p>
+      )}
+
+      <Accordion value={openGroups} onValueChange={setManualOpenGroups} className="space-y-3">
+        {groups.map(([groupLabel, docs]) => (
           <AccordionItem
             key={groupLabel}
             value={groupLabel}
-            className="rounded-lg border border-border bg-card px-4 shadow-sm"
+            className={cn(
+              'rounded-lg border px-4 shadow-sm',
+              groupLabel === UNCLASSIFIED_LABEL ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card'
+            )}
           >
             <AccordionTrigger>
               <span className="flex flex-1 items-baseline justify-between gap-2">
-                <span>{groupLabel}</span>
+                <span className={cn(groupLabel === UNCLASSIFIED_LABEL && 'text-amber-500')}>{groupLabel}</span>
                 <span className="text-xs font-normal text-muted-foreground">{docs.length} tài liệu</span>
               </span>
             </AccordionTrigger>
