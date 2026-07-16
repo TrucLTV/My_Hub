@@ -155,9 +155,6 @@ export default function AnimalRace() {
                     className="absolute top-0 left-0 flex items-center gap-1 transition-transform ease-out"
                     style={{ willChange: 'transform' }}
                   >
-                    <span className={isDrawn ? 'text-xl leading-none opacity-40 grayscale' : 'text-xl leading-none'}>
-                      {racerEmojis[i]}
-                    </span>
                     <span
                       className={
                         isDrawn
@@ -166,6 +163,9 @@ export default function AnimalRace() {
                       }
                     >
                       {i + 1}. {name}
+                    </span>
+                    <span className={isDrawn ? 'text-xl leading-none opacity-40 grayscale' : 'text-xl leading-none'}>
+                      {racerEmojis[i]}
                     </span>
                   </div>
                 </div>
