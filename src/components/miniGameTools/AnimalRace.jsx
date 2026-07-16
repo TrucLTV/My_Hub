@@ -185,8 +185,9 @@ export default function AnimalRace() {
               <span className="flex size-16 shrink-0 animate-in items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 duration-500">
                 {result.index + 1}
               </span>
-              <span className="animate-in rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
-                {result.name}
+              <span className="animate-in flex items-center gap-2 rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
+                <span>{racerEmojis[result.index]}</span>
+                <span>{result.name}</span>
               </span>
             </div>
           )}
