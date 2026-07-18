@@ -73,13 +73,17 @@ function CategoryCard({ title, href, icon: Icon, accent, data, isLoading }) {
   )
 }
 
-function StatTile({ label, value, accent = 'sky', highlight = false }) {
-  return (
-    <AccentCard accent={accent} className="cursor-default items-center gap-1 px-6 py-4 text-center">
+function StatTile({ label, value, href, accent = 'sky', highlight = false }) {
+  const card = (
+    <AccentCard
+      accent={accent}
+      className={`items-center gap-1 px-6 py-4 text-center ${href ? 'cursor-pointer' : 'cursor-default'}`}
+    >
       <p className={`text-3xl font-bold ${highlight ? 'text-white' : textColor[accent]}`}>{value}</p>
       <p className="text-xs tracking-wide text-muted-foreground uppercase">{label}</p>
     </AccentCard>
   )
+  return href ? <Link to={href}>{card}</Link> : card
 }
 
 export default function Home() {
@@ -104,7 +108,7 @@ export default function Home() {
       <div className="flex flex-wrap justify-center gap-3">
         <StatTile label="Tổng cộng" value={total} highlight />
         {bySection.map((s) => (
-          <StatTile key={s.key} label={s.title} value={s.data.length} accent={s.accent} />
+          <StatTile key={s.key} label={s.title} value={s.data.length} accent={s.accent} href={s.href} />
         ))}
       </div>
 
