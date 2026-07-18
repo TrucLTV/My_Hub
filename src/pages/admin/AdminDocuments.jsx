@@ -530,7 +530,7 @@ export default function AdminDocuments() {
           <ShieldCheck className="size-4" />
           {watermarking
             ? `Đang đánh dấu... (${watermarkResult?.done ?? 0}/${watermarkResult?.total ?? '?'})`
-            : 'Đánh dấu ẩn cho DOCX/XLSX/PPTX công khai hiện có'}
+            : 'Đánh dấu ẩn cho DOCX/XLSX/PPTX/HTML công khai hiện có'}
         </Button>
         {!watermarking && watermarkResult && (
           <span className="text-sm text-muted-foreground">
