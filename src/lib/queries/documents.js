@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabaseClient'
 import { toPrefixQuery } from '@/lib/textSearch'
+import { watermarkOoxmlBytes, hasWatermark, isWatermarkableExtension } from '@/lib/docxWatermark'
 
 export async function fetchPublicDocuments(search = '', filters = {}) {
   let query = supabase.from('documents_public_view').select('*')
@@ -65,11 +66,66 @@ function toSafeStorageName(filename) {
     .replace(/[^a-zA-Z0-9._-]/g, '_')
 }
 
+async function withWatermarkIfApplicable(file) {
+  if (!isWatermarkableExtension(file.name)) return file
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const watermarked = watermarkOoxmlBytes(bytes)
+    return new File([watermarked], file.name, { type: file.type })
+  } catch (err) {
+    console.warn('Không nhúng được watermark, tải file gốc:', err)
+    return file
+  }
+}
+
 export async function uploadDocumentFile(file) {
-  const path = `${crypto.randomUUID()}-${toSafeStorageName(file.name)}`
-  const { error } = await supabase.storage.from('documents').upload(path, file)
+  const fileToUpload = await withWatermarkIfApplicable(file)
+  const path = `${crypto.randomUUID()}-${toSafeStorageName(fileToUpload.name)}`
+  const { error } = await supabase.storage.from('documents').upload(path, fileToUpload)
   if (error) throw error
   return path
+}
+
+// Nhúng lại watermark cho các file .docx/.xlsx/.pptx công khai đã tải lên từ trước.
+// Chạy trong phiên đăng nhập admin (cần quyền ghi Storage qua RLS).
+export async function watermarkExistingPublicDocuments(onProgress, concurrency = 4) {
+  const { data: docs, error } = await supabase
+    .from('documents')
+    .select('id, file_url, file_type')
+    .eq('is_public', true)
+    .in('file_type', ['docx', 'xlsx', 'pptx'])
+  if (error) throw error
+
+  const results = { total: docs.length, done: 0, skipped: 0, failed: 0 }
+  let index = 0
+
+  async function worker() {
+    while (index < docs.length) {
+      const doc = docs[index++]
+      try {
+        const { data: blob, error: downloadError } = await supabase.storage.from('documents').download(doc.file_url)
+        if (downloadError) throw downloadError
+        const bytes = new Uint8Array(await blob.arrayBuffer())
+        if (hasWatermark(bytes)) {
+          results.skipped++
+        } else {
+          const watermarked = watermarkOoxmlBytes(bytes)
+          const { error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(doc.file_url, new Blob([watermarked], { type: blob.type }), { upsert: true })
+          if (uploadError) throw uploadError
+          results.done++
+        }
+      } catch (err) {
+        console.error(`Lỗi nhúng watermark cho tài liệu ${doc.id}:`, err)
+        results.failed++
+      }
+      onProgress?.({ ...results })
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, docs.length) || 1 }, () => worker()))
+  return results
 }
 
 export async function getDocumentSignedUrl(path, downloadName) {

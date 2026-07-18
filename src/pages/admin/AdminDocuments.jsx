@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, FileText, Globe, Lock, EyeOff, FolderOpen } from 'lucide-react'
+import { ArrowLeft, FileText, Globe, Lock, EyeOff, FolderOpen, ShieldCheck } from 'lucide-react'
 import {
   fetchAllDocuments,
   createDocument,
@@ -9,6 +9,7 @@ import {
   deleteDocument,
   uploadDocumentFile,
   getDocumentSignedUrl,
+  watermarkExistingPublicDocuments,
 } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters } from '@/lib/documentTaxonomy'
 import BulkDocumentUploadDialog from '@/pages/admin/BulkDocumentUploadDialog'
@@ -255,8 +256,21 @@ export default function AdminDocuments() {
   const [uploading, setUploading] = useState(false)
   const [search, setSearch] = useState('')
   const [manualOpenGroups, setManualOpenGroups] = useState([])
+  const [watermarking, setWatermarking] = useState(false)
+  const [watermarkResult, setWatermarkResult] = useState(null)
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['documents'] })
+
+  async function handleWatermarkExisting() {
+    setWatermarking(true)
+    setWatermarkResult(null)
+    try {
+      const result = await watermarkExistingPublicDocuments((progress) => setWatermarkResult(progress))
+      setWatermarkResult(result)
+    } finally {
+      setWatermarking(false)
+    }
+  }
 
   const createMutation = useMutation({ mutationFn: createDocument, onSuccess: invalidate })
   const updateMutation = useMutation({
@@ -508,6 +522,21 @@ export default function AdminDocuments() {
         <StatPill icon={EyeOff} label="Ẩn hoàn toàn" count={privateCount} />
         {unclassifiedCount > 0 && (
           <StatPill icon={FolderOpen} label="Chưa phân loại" count={unclassifiedCount} />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleWatermarkExisting} disabled={watermarking}>
+          <ShieldCheck className="size-4" />
+          {watermarking
+            ? `Đang đánh dấu... (${watermarkResult?.done ?? 0}/${watermarkResult?.total ?? '?'})`
+            : 'Đánh dấu ẩn cho DOCX/XLSX/PPTX công khai hiện có'}
+        </Button>
+        {!watermarking && watermarkResult && (
+          <span className="text-sm text-muted-foreground">
+            Xong: {watermarkResult.done} vừa đánh dấu, {watermarkResult.skipped} đã có sẵn, {watermarkResult.failed} lỗi
+            (tổng {watermarkResult.total}).
+          </span>
         )}
       </div>
 
