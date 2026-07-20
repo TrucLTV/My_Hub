@@ -8,13 +8,13 @@ import { accentClasses } from '@/lib/accentColors'
 import { timeAgo } from '@/lib/timeAgo'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useTagFilter } from '@/hooks/useTagFilter'
-import ContentCard from '@/components/ContentCard'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PageBanner from '@/components/PageBanner'
 import AccentCard from '@/components/AccentCard'
 import PasswordPrompt from '@/components/PasswordPrompt'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const PATH_PARAMS = ['loai', 'mon', 'khoi', 'nhom']
@@ -44,17 +44,6 @@ function Breadcrumb({ path, nodes, onNavigate }) {
           </button>
         </span>
       ))}
-    </div>
-  )
-}
-
-function DecorativeBackground({ accent }) {
-  const colors = accentClasses[accent]
-  return (
-    <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-      <div className={`absolute -top-16 -left-16 size-72 rounded-full bg-gradient-to-br ${colors.gradient} to-transparent opacity-20 blur-3xl`} />
-      <div className="absolute top-10 right-0 size-96 rounded-full bg-gradient-to-br from-violet-500 to-transparent opacity-10 blur-3xl" />
-      <Folder className={`absolute -right-8 top-4 size-56 ${colors.iconText} opacity-[0.06]`} strokeWidth={1} />
     </div>
   )
 }
@@ -97,55 +86,84 @@ function RecentDocuments({ documents }) {
   )
 }
 
+function PublicDocumentCard({ doc, onDownload, onLockedClick }) {
+  return (
+    <AccentCard accent={DOC_ACCENT} className="cursor-default gap-2 p-4">
+      <p className="font-medium">{doc.title}</p>
+      {doc.description && <p className="text-sm text-muted-foreground">{doc.description}</p>}
+      {doc.tags?.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {doc.tags.map((tag) => (
+            <Badge key={tag} variant="outline">{tag}</Badge>
+          ))}
+        </div>
+      )}
+      {doc.file_url && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-fit"
+          onClick={() => onDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}
+        >
+          <Download className="size-3.5" /> Tải xuống ({doc.file_type})
+        </Button>
+      )}
+      {doc.is_locked && !doc.file_url && (
+        <Button variant="outline" size="sm" className="w-fit" onClick={() => onLockedClick(doc)}>
+          <Lock className="size-3.5" /> Nhập mật khẩu để tải ({doc.file_type})
+        </Button>
+      )}
+    </AccentCard>
+  )
+}
+
 function RootColumns({ documents, onOpenPath }) {
   const giangDaySubjects = DOCUMENT_TAXONOMY.giang_day.children
+  const giangDayCount = countDocs(documents, { category: 'giang_day' })
   const hocTapCount = countDocs(documents, { category: 'hoc_tap' })
   const [subject, setSubject] = useState('')
 
   return (
-    <div className="grid gap-4 py-6 md:grid-cols-2">
-      <div className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 shadow-lg shadow-black/20 ring-1 ring-slate-300/40">
-        <div className="flex items-center gap-2 bg-gradient-to-r from-violet-800 to-violet-950 px-4 py-3 font-semibold text-white">
-          <GraduationCap className="size-5" /> Giảng dạy
-        </div>
-        <div className="bg-card p-4">
-          <Select
-            value={subject}
-            onValueChange={(key) => {
-              setSubject(key)
-              onOpenPath(['giang_day', key])
-            }}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Chọn môn học...">
-                {() => giangDaySubjects[subject]?.label ?? 'Chọn môn học...'}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(giangDaySubjects).map(([key, node]) => (
-                <SelectItem key={key} value={key}>
-                  {node.label} — {countDocs(documents, { category: 'giang_day', subject: key })} tài liệu
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+    <div className="grid gap-4 py-6 sm:grid-cols-2">
+      <AccentCard accent={GIANG_DAY_ACCENT} className="cursor-default items-center gap-3 p-6 text-center">
+        <span className={`flex size-14 items-center justify-center rounded-lg ${accentClasses[GIANG_DAY_ACCENT].iconBg} ${accentClasses[GIANG_DAY_ACCENT].iconText}`}>
+          <GraduationCap className="size-7" />
+        </span>
+        <p className="font-medium">Giảng dạy</p>
+        <p className="text-xs text-muted-foreground">{giangDayCount} tài liệu</p>
+        <Select
+          value={subject}
+          onValueChange={(key) => {
+            setSubject(key)
+            onOpenPath(['giang_day', key])
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Chọn môn học...">
+              {() => giangDaySubjects[subject]?.label ?? 'Chọn môn học...'}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(giangDaySubjects).map(([key, node]) => (
+              <SelectItem key={key} value={key}>
+                {node.label} — {countDocs(documents, { category: 'giang_day', subject: key })} tài liệu
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </AccentCard>
 
-      <button
+      <AccentCard
+        accent="sky"
         onClick={() => onOpenPath(['hoc_tap'])}
-        className="overflow-hidden rounded-xl border-t-4 border-t-orange-400 text-left shadow-lg shadow-black/20 ring-1 ring-slate-300/40 transition-all duration-200 hover:-translate-y-1"
+        className="cursor-pointer items-center gap-3 p-6 text-center"
       >
-        <div className="flex items-center gap-2 bg-gradient-to-r from-sky-800 to-sky-950 px-4 py-3 font-semibold text-white">
-          <BookOpen className="size-5" /> Học tập
-        </div>
-        <div className="flex flex-col items-center justify-center gap-2 bg-card p-8 text-center">
-          <span className={`flex size-14 items-center justify-center rounded-lg ${accentClasses.sky.iconBg} ${accentClasses.sky.iconText}`}>
-            <BookOpen className="size-7" />
-          </span>
-          <p className="text-muted-foreground">{hocTapCount} tài liệu</p>
-        </div>
-      </button>
+        <span className={`flex size-14 items-center justify-center rounded-lg ${accentClasses.sky.iconBg} ${accentClasses.sky.iconText}`}>
+          <BookOpen className="size-7" />
+        </span>
+        <p className="font-medium">Học tập</p>
+        <p className="text-xs text-muted-foreground">{hocTapCount} tài liệu</p>
+      </AccentCard>
     </div>
   )
 }
@@ -266,8 +284,7 @@ export default function DocumentsPublic() {
   return (
     <div className="space-y-4">
       <PageBanner title="Tài liệu" subtitle="Giáo án, giáo trình, tài liệu học tập" />
-      <div className="relative">
-        {!isLeaf && <DecorativeBackground accent={DOC_ACCENT} />}
+      <div>
         <Breadcrumb path={validPath} nodes={crumbNodes} onNavigate={navigateTo} />
 
         {error && <p className="text-destructive">Lỗi: {error.message}</p>}
@@ -317,20 +334,14 @@ export default function DocumentsPublic() {
             {isLoading && <p>Đang tải...</p>}
             {!isLoading && !filtered.length && <p className="text-muted-foreground">Chưa có tài liệu nào.</p>}
             {!isLoading && (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((doc) => (
-                  <ContentCard key={doc.id} title={doc.title} description={doc.description} tags={doc.tags} accent={DOC_ACCENT} icon={Folder}>
-                    {doc.file_url && (
-                      <Button className="w-full" onClick={() => handleDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}>
-                        <Download className="size-4" /> Tải xuống ({doc.file_type})
-                      </Button>
-                    )}
-                    {doc.is_locked && !doc.file_url && (
-                      <Button className="w-full" onClick={() => setLockedDoc(doc)}>
-                        <Lock className="size-4" /> Nhập mật khẩu để tải ({doc.file_type})
-                      </Button>
-                    )}
-                  </ContentCard>
+                  <PublicDocumentCard
+                    key={doc.id}
+                    doc={doc}
+                    onDownload={handleDownload}
+                    onLockedClick={setLockedDoc}
+                  />
                 ))}
               </div>
             )}

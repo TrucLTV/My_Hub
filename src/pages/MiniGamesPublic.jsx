@@ -72,8 +72,13 @@ function GameActions({ game, revealed, onRequestUnlock, onPlay }) {
   if (game.delivery_type === 'downloadable') {
     if (!payload.file_url) return null
     return (
-      <Button className="w-full" onClick={() => handleDownload(payload.file_url, `${game.title}.${payload.file_type ?? ''}`)}>
-        <Download className="size-4" /> Tải xuống
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-fit"
+        onClick={() => handleDownload(payload.file_url, `${game.title}.${payload.file_type ?? ''}`)}
+      >
+        <Download className="size-3.5" /> Tải xuống
       </Button>
     )
   }
