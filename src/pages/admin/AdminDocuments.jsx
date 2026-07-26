@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, FileText, Globe, Lock, EyeOff, FolderOpen, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, FileText, Globe, Lock, EyeOff, FolderOpen, ShieldCheck, Trash2 } from 'lucide-react'
 import {
   fetchAllDocuments,
   createDocument,
   updateDocument,
   deleteDocument,
+  bulkDeleteDocuments,
   uploadDocumentFile,
   getDocumentSignedUrl,
   watermarkExistingPublicDocuments,
@@ -22,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionPanel } from '@/components/ui/accordion'
 import {
@@ -114,10 +116,11 @@ function docsForPath(documents, path) {
   return documents.filter((doc) => Object.entries(filters).every(([k, v]) => doc[k] === v))
 }
 
-function DocumentCard({ doc, onEdit, onDelete, onDownload }) {
+function DocumentCard({ doc, onEdit, onDelete, onDownload, selected, onToggleSelect }) {
   return (
     <AccentCard accent="emerald" className="cursor-default gap-2 p-3">
       <div className="flex items-center gap-2 flex-wrap">
+        <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(doc.id)} />
         {doc.sort_order != null && <Badge variant="outline">#{doc.sort_order}</Badge>}
         <p className="font-medium">{doc.title}</p>
         <VisibilityBadge row={doc} />
@@ -142,8 +145,26 @@ function DocumentCard({ doc, onEdit, onDelete, onDownload }) {
   )
 }
 
+function SelectAllRow({ docs, selectedIds, onToggleSelectAll }) {
+  const ids = docs.map((d) => d.id)
+  const selectedCount = ids.filter((id) => selectedIds.has(id)).length
+  const allSelected = ids.length > 0 && selectedCount === ids.length
+  const someSelected = selectedCount > 0 && !allSelected
+  if (ids.length === 0) return null
+  return (
+    <label className="flex w-fit items-center gap-2 text-sm text-muted-foreground select-none">
+      <Checkbox
+        checked={allSelected}
+        indeterminate={someSelected}
+        onCheckedChange={(checked) => onToggleSelectAll(ids, checked)}
+      />
+      Chọn tất cả{selectedCount > 0 ? ` (${selectedCount}/${ids.length})` : ` (${ids.length})`}
+    </label>
+  )
+}
+
 // Duyệt tài liệu theo môn -> khối -> nhóm bài, giống cách trang public tổ chức thư mục.
-function SubjectBrowser({ documents, onEdit, onDelete, onDownload }) {
+function SubjectBrowser({ documents, onEdit, onDelete, onDownload, selectedIds, onToggleSelect, onToggleSelectAll }) {
   const [path, setPath] = useState(null)
 
   if (path === null) {
@@ -178,9 +199,18 @@ function SubjectBrowser({ documents, onEdit, onDelete, onDownload }) {
       <div className="space-y-3">
         <Button variant="ghost" size="sm" onClick={() => setPath(null)}>← Đổi môn khác</Button>
         <p className="text-sm font-medium text-muted-foreground">{UNCLASSIFIED_LABEL} — {docs.length} tài liệu</p>
+        <SelectAllRow docs={docs} selectedIds={selectedIds} onToggleSelectAll={onToggleSelectAll} />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {docs.map((doc) => (
-            <DocumentCard key={doc.id} doc={doc} onEdit={onEdit} onDelete={onDelete} onDownload={onDownload} />
+            <DocumentCard
+              key={doc.id}
+              doc={doc}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onDownload={onDownload}
+              selected={selectedIds.has(doc.id)}
+              onToggleSelect={onToggleSelect}
+            />
           ))}
         </div>
       </div>
@@ -206,9 +236,18 @@ function SubjectBrowser({ documents, onEdit, onDelete, onDownload }) {
       {isLeaf ? (
         <>
           <p className="text-sm font-medium text-muted-foreground">{docsForPath(documents, path).length} tài liệu</p>
+          <SelectAllRow docs={docsForPath(documents, path)} selectedIds={selectedIds} onToggleSelectAll={onToggleSelectAll} />
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {docsForPath(documents, path).map((doc) => (
-              <DocumentCard key={doc.id} doc={doc} onEdit={onEdit} onDelete={onDelete} onDownload={onDownload} />
+              <DocumentCard
+                key={doc.id}
+                doc={doc}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onDownload={onDownload}
+                selected={selectedIds.has(doc.id)}
+                onToggleSelect={onToggleSelect}
+              />
             ))}
           </div>
         </>
@@ -258,8 +297,29 @@ export default function AdminDocuments() {
   const [manualOpenGroups, setManualOpenGroups] = useState([])
   const [watermarking, setWatermarking] = useState(false)
   const [watermarkResult, setWatermarkResult] = useState(null)
+  const [selectedIds, setSelectedIds] = useState(new Set())
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['documents'] })
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll(ids, checked) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      for (const id of ids) {
+        if (checked) next.add(id)
+        else next.delete(id)
+      }
+      return next
+    })
+  }
 
   async function handleWatermarkExisting() {
     setWatermarking(true)
@@ -278,6 +338,19 @@ export default function AdminDocuments() {
     onSuccess: invalidate,
   })
   const deleteMutation = useMutation({ mutationFn: deleteDocument, onSuccess: invalidate })
+  const bulkDeleteMutation = useMutation({
+    mutationFn: bulkDeleteDocuments,
+    onSuccess: () => {
+      invalidate()
+      setSelectedIds(new Set())
+    },
+  })
+
+  function handleBulkDelete() {
+    if (selectedIds.size === 0) return
+    if (!window.confirm(`Xóa ${selectedIds.size} tài liệu đã chọn? Hành động này không thể hoàn tác.`)) return
+    bulkDeleteMutation.mutate([...selectedIds])
+  }
 
   function openCreate() {
     setEditingId(null)
@@ -542,6 +615,24 @@ export default function AdminDocuments() {
 
       <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên tài liệu hoặc tag..." />
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2">
+          <span className="text-sm font-medium">{selectedIds.size} tài liệu đã chọn</span>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={bulkDeleteMutation.isPending}
+          >
+            <Trash2 className="size-4" />
+            {bulkDeleteMutation.isPending ? 'Đang xóa...' : 'Xóa đã chọn'}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
+            Bỏ chọn
+          </Button>
+        </div>
+      )}
+
       {isSearching ? (
         <>
           {groups.length === 0 && (
@@ -563,7 +654,8 @@ export default function AdminDocuments() {
                     <span className="text-xs font-normal text-muted-foreground">{docs.length} tài liệu</span>
                   </span>
                 </AccordionTrigger>
-                <AccordionPanel>
+                <AccordionPanel className="space-y-3">
+                  <SelectAllRow docs={docs} selectedIds={selectedIds} onToggleSelectAll={toggleSelectAll} />
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     {docs.map((doc) => (
                       <DocumentCard
@@ -572,6 +664,8 @@ export default function AdminDocuments() {
                         onEdit={openEdit}
                         onDelete={(id) => deleteMutation.mutate(id)}
                         onDownload={handleDownload}
+                        selected={selectedIds.has(doc.id)}
+                        onToggleSelect={toggleSelect}
                       />
                     ))}
                   </div>
@@ -586,6 +680,9 @@ export default function AdminDocuments() {
           onEdit={openEdit}
           onDelete={(id) => deleteMutation.mutate(id)}
           onDownload={handleDownload}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
         />
       )}
     </div>

@@ -56,6 +56,11 @@ export async function deleteDocument(id) {
   if (error) throw error
 }
 
+export async function bulkDeleteDocuments(ids) {
+  const { error } = await supabase.from('documents').delete().in('id', ids)
+  if (error) throw error
+}
+
 const COMBINING_DIACRITICS = new RegExp('[̀-ͯ]', 'g')
 
 function toSafeStorageName(filename) {
