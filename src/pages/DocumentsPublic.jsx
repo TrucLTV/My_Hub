@@ -199,20 +199,20 @@ function TwoLevelGrid({ groups, onOpen }) {
   return (
     <div className="flex flex-wrap justify-center gap-6 py-6">
       {groups.map(({ key: parentKey, label: parentLabel, children }) => (
-        <div key={parentKey} className="w-36 space-y-3 sm:w-40">
+        <div key={parentKey} className="w-40 space-y-3 sm:w-44">
           <h3 className="text-center text-sm font-semibold tracking-wide text-muted-foreground uppercase">{parentLabel}</h3>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2.5">
             {children.map(({ key: childKey, label: childLabel, count }) => (
               <AccentCard
                 key={childKey}
                 accent={DOC_ACCENT}
                 onClick={() => onOpen([parentKey, childKey])}
-                className="cursor-pointer items-center gap-2 p-4 text-center"
+                className="cursor-pointer items-center gap-1.5 p-3 text-center"
               >
-                <span className={`flex size-12 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
-                  <Folder className="size-6" />
+                <span className={`flex size-10 items-center justify-center rounded-lg ${colors.iconBg} ${colors.iconText}`}>
+                  <Folder className="size-5" />
                 </span>
-                <p className="w-full truncate font-medium text-sm">{childLabel}</p>
+                <p className="line-clamp-2 w-full text-sm leading-tight font-medium">{childLabel}</p>
                 <p className="text-xs text-muted-foreground">{count} tài liệu</p>
               </AccentCard>
             ))}
