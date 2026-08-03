@@ -88,14 +88,14 @@ export default function AdminResources() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Quản lý tài nguyên</h1>
+        <h1 className="text-xl font-semibold">Quản lý ngân hàng câu hỏi</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger render={<Button onClick={openCreate} />}>
-            + Tài nguyên mới
+            + Thêm mới
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Sửa tài nguyên' : 'Tài nguyên mới'}</DialogTitle>
+              <DialogTitle>{editingId ? 'Sửa mục' : 'Thêm mục mới'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1">

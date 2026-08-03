@@ -18,7 +18,7 @@ export default function AdminDashboard() {
           <div className="flex gap-2">
             <Link to="/admin/tai-lieu" className={navTabClass}>Tài liệu</Link>
             <Link to="/admin/mini-game" className={navTabClass}>Mini game</Link>
-            <Link to="/admin/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
+            <Link to="/admin/tai-nguyen" className={navTabClass}>Ngân hàng câu hỏi</Link>
             <Link to="/admin/phim-game" className={navTabClass}>Giải trí</Link>
             <Link to="/admin/cai-dat" className={navTabClass}>Cài đặt</Link>
           </div>

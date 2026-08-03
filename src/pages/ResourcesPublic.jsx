@@ -33,7 +33,7 @@ export default function ResourcesPublic() {
 
   return (
     <div className="space-y-4">
-      <PageBanner title="Tài nguyên" subtitle="Bài viết, sách nên đọc, link hữu ích" />
+      <PageBanner title="Ngân hàng câu hỏi" subtitle="Đề trắc nghiệm và tài nguyên tham khảo khác" />
       <SearchBar value={search} onChange={setSearch} placeholder="Tìm tài nguyên..." />
       <TagFilter tags={allTags} selected={selectedTags} onToggle={toggleTag} />
       {isLoading && <p>Đang tải...</p>}
@@ -62,7 +62,7 @@ export default function ResourcesPublic() {
         open={promptId !== null}
         onOpenChange={(v) => !v && setPromptId(null)}
         onSubmit={handleUnlock}
-        title="Tài nguyên bị khóa"
+        title="Mục bị khóa"
       />
     </div>
   )

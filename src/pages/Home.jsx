@@ -21,7 +21,7 @@ const textColor = {
 const sections = [
   { key: 'documents', title: 'Tài liệu', href: '/tai-lieu', icon: FolderOpen, accent: 'emerald', queryFn: fetchPublicDocuments },
   { key: 'mini_games', title: 'Mini game', href: '/mini-game', icon: Gamepad2, accent: 'sky', queryFn: fetchPublicMiniGames },
-  { key: 'resources', title: 'Tài nguyên', href: '/tai-nguyen', icon: Link2, accent: 'violet', queryFn: fetchPublicResources },
+  { key: 'resources', title: 'Ngân hàng câu hỏi', href: '/tai-nguyen', icon: Link2, accent: 'violet', queryFn: fetchPublicResources },
   { key: 'media_tracker', title: 'Giải trí', href: '/phim-game', icon: Clapperboard, accent: 'amber', queryFn: fetchPublicMedia },
 ]
 

@@ -19,7 +19,7 @@ export default function Layout() {
           <div className="flex flex-1 items-center gap-2 overflow-x-auto whitespace-nowrap sm:justify-end">
             <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
             <Link to="/mini-game" className={navTabClass}>Mini game</Link>
-            <Link to="/tai-nguyen" className={navTabClass}>Tài nguyên</Link>
+            <Link to="/tai-nguyen" className={navTabClass}>Ngân hàng câu hỏi</Link>
             <Link to="/phim-game" className={navTabClass}>Giải trí</Link>
           </div>
           <ThemeToggle className="shrink-0 text-blue-200/80 hover:bg-white/10 hover:text-white" />
