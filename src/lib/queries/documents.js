@@ -169,6 +169,16 @@ export async function getDocumentSignedUrl(path, downloadName) {
   return data.signedUrl
 }
 
+// Giong getDocumentSignedUrl nhung khong ep tai xuong (download: false), de nhung
+// thang vao the <video>/<iframe> phat truc tiep thay vi trinh duyet tai file ve.
+export async function getDocumentPreviewUrl(path) {
+  const { data, error } = await supabase.storage
+    .from('documents')
+    .createSignedUrl(path, 3600, { download: false })
+  if (error) throw error
+  return data.signedUrl
+}
+
 export async function unlockDocumentPath(id, password) {
   const { data, error } = await supabase.rpc('get_locked_document_path', { p_id: id, p_password: password })
   if (error) throw error

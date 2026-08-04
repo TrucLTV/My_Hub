@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock, Download, GraduationCap, BookOpen, Sparkles } from 'lucide-react'
-import { fetchPublicDocuments, getDocumentSignedUrl, unlockDocumentPath } from '@/lib/queries/documents'
+import { Folder, ChevronRight, Lock, Download, Play, GraduationCap, BookOpen, Sparkles } from 'lucide-react'
+import { fetchPublicDocuments, getDocumentSignedUrl, getDocumentPreviewUrl, unlockDocumentPath } from '@/lib/queries/documents'
 import { DOCUMENT_TAXONOMY, getTaxonomyNode, pathToFilters, PATH_COLUMNS } from '@/lib/documentTaxonomy'
 import { accentClasses } from '@/lib/accentColors'
 import { timeAgo } from '@/lib/timeAgo'
@@ -86,7 +86,29 @@ function RecentDocuments({ documents }) {
   )
 }
 
+const VIDEO_FILE_TYPES = ['mp4', 'webm', 'mov', 'm4v', 'ogv']
+
+function isVideoFileType(fileType) {
+  return VIDEO_FILE_TYPES.includes((fileType ?? '').toLowerCase())
+}
+
 function PublicDocumentCard({ doc, onDownload, onLockedClick }) {
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+
+  async function togglePreview() {
+    if (previewUrl) {
+      setPreviewUrl(null)
+      return
+    }
+    setPreviewLoading(true)
+    try {
+      setPreviewUrl(await getDocumentPreviewUrl(doc.file_url))
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
   return (
     <AccentCard accent={DOC_ACCENT} className="cursor-default gap-2 p-4">
       <p className="font-medium">{doc.title}</p>
@@ -98,15 +120,27 @@ function PublicDocumentCard({ doc, onDownload, onLockedClick }) {
           ))}
         </div>
       )}
+      {previewUrl && (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video src={previewUrl} controls className="w-full rounded-md bg-black" />
+      )}
       {doc.file_url && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-fit"
-          onClick={() => onDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}
-        >
-          <Download className="size-3.5" /> Tải xuống ({doc.file_type})
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {isVideoFileType(doc.file_type) && (
+            <Button variant="outline" size="sm" className="w-fit" onClick={togglePreview} disabled={previewLoading}>
+              <Play className="size-3.5" />
+              {previewLoading ? 'Đang tải...' : previewUrl ? 'Ẩn video' : 'Xem trước'}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-fit"
+            onClick={() => onDownload(doc.file_url, `${doc.title}.${doc.file_type}`)}
+          >
+            <Download className="size-3.5" /> Tải xuống ({doc.file_type})
+          </Button>
+        </div>
       )}
       {doc.is_locked && !doc.file_url && (
         <Button variant="outline" size="sm" className="w-fit" onClick={() => onLockedClick(doc)}>
