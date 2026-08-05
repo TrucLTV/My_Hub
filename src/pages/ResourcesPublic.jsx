@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Folder, ChevronRight, Lock, ExternalLink, Layers } from 'lucide-react'
 import { fetchPublicResources, unlockResourceUrl } from '@/lib/queries/resources'
 import { RESOURCE_SUBJECTS, RESOURCE_GRADES, QUESTION_TYPE_OPTIONS, DIFFICULTY_LEVEL_OPTIONS } from '@/lib/resourceTaxonomy'
+import { isSelfHostedHtml, openSelfHostedHtml } from '@/lib/openSelfHostedHtml'
 import { accentClasses } from '@/lib/accentColors'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
@@ -17,26 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 const ACCENT = 'violet'
 const ALL_VALUE = '__all__'
-
-// File .html tu-luu (vd de trac nghiem tu tool ngoai gui vao) dang bi Supabase
-// Storage phuc vu sai Content-Type (luon la text/plain du metadata da dung),
-// khien trinh duyet khong chiu render ma hien nguyen ma. Voi rieng loai file
-// nay, ta tu fetch noi dung roi mo bang Blob co khai bao dung "text/html" —
-// bo qua hoan toan header sai tu server, khong can Supabase sua gi ca.
-const RESOURCE_FILES_PREFIX = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/resource_files/`
-
-function isSelfHostedHtml(url) {
-  return typeof url === 'string' && url.startsWith(RESOURCE_FILES_PREFIX) && url.toLowerCase().endsWith('.html')
-}
-
-async function openSelfHostedHtml(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Không tải được file (${res.status})`)
-  const text = await res.text()
-  const blobUrl = URL.createObjectURL(new Blob([text], { type: 'text/html' }))
-  window.open(blobUrl, '_blank', 'noopener,noreferrer')
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
-}
 
 function matchesSearch(resource, query) {
   if (!query) return true

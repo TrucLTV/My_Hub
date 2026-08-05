@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchAllResources, createResource, updateResource, deleteResource } from '@/lib/queries/resources'
 import { RESOURCE_SUBJECTS, RESOURCE_GRADES, QUESTION_TYPE_OPTIONS, DIFFICULTY_LEVEL_OPTIONS } from '@/lib/resourceTaxonomy'
+import { isSelfHostedHtml, openSelfHostedHtml } from '@/lib/openSelfHostedHtml'
 import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
 import SearchBar from '@/components/SearchBar'
 import { Button } from '@/components/ui/button'
@@ -83,6 +84,20 @@ function matchesSearch(resource, query) {
 }
 
 function ResourceRow({ resource, onEdit, onDelete }) {
+  const [openError, setOpenError] = useState(null)
+  const selfHosted = isSelfHostedHtml(resource.url)
+
+  async function handleOpen(e) {
+    if (!selfHosted) return
+    e.preventDefault()
+    setOpenError(null)
+    try {
+      await openSelfHostedHtml(resource.url)
+    } catch (err) {
+      setOpenError(err.message)
+    }
+  }
+
   return (
     <div className="rounded-md border border-border p-3 space-y-2">
       <div className="flex items-start justify-between gap-2">
@@ -91,9 +106,16 @@ function ResourceRow({ resource, onEdit, onDelete }) {
             <p className="font-medium">{resource.title}</p>
             <VisibilityBadge row={resource} />
           </div>
-          <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline break-all">
+          <a
+            href={resource.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={handleOpen}
+            className="text-sm text-primary underline break-all"
+          >
             {resource.url}
           </a>
+          {openError && <p className="text-xs text-destructive">{openError}</p>}
         </div>
         <div className="flex gap-2 shrink-0">
           <Button variant="outline" size="sm" onClick={() => onEdit(resource)}>Sửa</Button>
