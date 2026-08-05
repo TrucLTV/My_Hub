@@ -1,11 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock, ExternalLink, Layers } from 'lucide-react'
+import { Folder, ChevronRight, Lock, ExternalLink, Layers, CheckCircle2 } from 'lucide-react'
 import { fetchPublicResources, unlockResourceUrl } from '@/lib/queries/resources'
-import { RESOURCE_SUBJECTS, RESOURCE_GRADES, QUESTION_TYPE_OPTIONS, DIFFICULTY_LEVEL_OPTIONS } from '@/lib/resourceTaxonomy'
+import {
+  RESOURCE_SUBJECTS,
+  RESOURCE_GRADES,
+  QUESTION_TYPE_OPTIONS,
+  DIFFICULTY_LEVEL_OPTIONS,
+  QUESTION_TYPE_LABELS,
+  BLOOM_LABELS,
+} from '@/lib/resourceTaxonomy'
 import { isSelfHostedHtml, openSelfHostedHtml } from '@/lib/openSelfHostedHtml'
+import { parseQuizData, subjectFromTags, gradeFromTags } from '@/lib/quizParser'
 import { accentClasses } from '@/lib/accentColors'
+import { cn } from '@/lib/utils'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PageBanner from '@/components/PageBanner'
@@ -19,12 +28,62 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const ACCENT = 'violet'
 const ALL_VALUE = '__all__'
 
-function matchesSearch(resource, query) {
-  if (!query) return true
-  const q = query.toLowerCase()
-  if (resource.title.toLowerCase().includes(q)) return true
-  if (resource.lesson?.toLowerCase().includes(q)) return true
-  return (resource.tags ?? []).some((tag) => tag.toLowerCase().includes(q))
+// Mon/Khoi cua 1 resource: uu tien cot rieng (nhap tay qua Admin), fallback doc
+// tu tags (cach duy nhat tool gui-tu-dong dang ghi Mon/Khoi vao, xem quizParser.js).
+function classifyResource(resource) {
+  return {
+    subject: resource.subject || subjectFromTags(resource.tags),
+    grade_level: resource.grade_level || gradeFromTags(resource.tags),
+  }
+}
+
+// Tai + parse tung file de tu-luu (bo qua resource dang khoa chua mo, hoac link
+// ngoai khong phai file cua tool) de gop toan bo cau hoi ben trong lai thanh 1
+// kho duyet chung — thay vi bat GV mo tung de.
+async function fetchQuestionPool(resources) {
+  const candidates = resources.filter((r) => isSelfHostedHtml(r.url))
+  const parsedEntries = await Promise.all(
+    candidates.map(async (resource) => {
+      try {
+        const res = await fetch(resource.url)
+        if (!res.ok) return null
+        const data = parseQuizData(await res.text())
+        if (!data?.questions?.length) return null
+        return { resource, data }
+      } catch {
+        return null
+      }
+    })
+  )
+
+  const questions = []
+  const parsedIds = new Set()
+  for (const entry of parsedEntries) {
+    if (!entry) continue
+    const { resource, data } = entry
+    parsedIds.add(resource.id)
+    const { subject, grade_level } = classifyResource(resource)
+    const topic = data.topic || resource.topic || null
+    const lesson = data.lesson || resource.lesson || null
+    data.questions.forEach((q, i) => {
+      questions.push({
+        ...q,
+        id: `${resource.id}-${i}`,
+        resourceId: resource.id,
+        resourceTitle: resource.title,
+        resourceUrl: resource.url,
+        subject,
+        grade_level,
+        topic,
+        lesson,
+      })
+    })
+  }
+  return { questions, parsedIds }
+}
+
+function distinctSorted(values) {
+  return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'))
 }
 
 function Breadcrumb({ subject, grade, onNavigate }) {
@@ -53,7 +112,7 @@ function Breadcrumb({ subject, grade, onNavigate }) {
   )
 }
 
-function SubjectPicker({ resources, onSelect }) {
+function SubjectPicker({ questions, onSelect }) {
   return (
     <div className="mx-auto max-w-sm space-y-1 py-8">
       <Label>Chọn môn để xem ngân hàng câu hỏi</Label>
@@ -64,7 +123,7 @@ function SubjectPicker({ resources, onSelect }) {
         <SelectContent>
           {Object.entries(RESOURCE_SUBJECTS).map(([key, node]) => (
             <SelectItem key={key} value={key}>
-              {node.label} — {resources.filter((r) => r.subject === key).length} câu hỏi
+              {node.label} — {questions.filter((q) => q.subject === key).length} câu hỏi
             </SelectItem>
           ))}
         </SelectContent>
@@ -73,7 +132,7 @@ function SubjectPicker({ resources, onSelect }) {
   )
 }
 
-function GradeGrid({ resources, subject, onSelect }) {
+function GradeGrid({ questions, subject, onSelect }) {
   const colors = accentClasses[ACCENT]
   return (
     <div className="flex flex-wrap justify-center gap-4 py-6">
@@ -89,11 +148,107 @@ function GradeGrid({ resources, subject, onSelect }) {
           </span>
           <p className="w-full font-medium text-sm">{node.label}</p>
           <p className="text-xs text-muted-foreground">
-            {resources.filter((r) => r.subject === subject && r.grade_level === key).length} câu hỏi
+            {questions.filter((q) => q.subject === subject && q.grade_level === key).length} câu hỏi
           </p>
         </AccentCard>
       ))}
     </div>
+  )
+}
+
+function OptionList({ options, correctIndexes }) {
+  return (
+    <div className="space-y-1">
+      {options.map((opt, i) => (
+        <div
+          key={i}
+          className={cn(
+            'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm',
+            correctIndexes.includes(i) ? 'border-emerald-500/50 bg-emerald-500/10 font-medium' : 'border-border'
+          )}
+        >
+          {correctIndexes.includes(i) && <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />}
+          {opt}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function QuestionBody({ q }) {
+  if (q.type === 'single') return <OptionList options={q.options} correctIndexes={[q.correctIndex]} />
+  if (q.type === 'multi') return <OptionList options={q.options} correctIndexes={q.correctIndexes ?? []} />
+  if (q.type === 'order') {
+    return (
+      <ol className="list-inside list-decimal space-y-1 text-sm">
+        {q.items.map((item, i) => <li key={i}>{item}</li>)}
+      </ol>
+    )
+  }
+  if (q.type === 'match') {
+    return (
+      <div className="space-y-1 text-sm">
+        {(q.pairs ?? []).map((pair) => {
+          const a = q.colA?.find((x) => x.id === pair.a)?.text
+          const b = q.colB?.find((x) => x.id === pair.b)?.text
+          return (
+            <div key={pair.a} className="rounded-md border border-border px-3 py-1.5">
+              {a} <span className="text-muted-foreground">—</span> {b}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+  if (q.type === 'dragdrop') {
+    return (
+      <div className="space-y-1 text-sm">
+        {Object.entries(q.mapping ?? {}).map(([itemId, targetId]) => {
+          const item = q.items?.find((x) => x.id === itemId)?.text
+          const target = q.targets?.find((x) => x.id === targetId)?.text
+          return (
+            <div key={itemId} className="rounded-md border border-border px-3 py-1.5">
+              {item} <span className="text-muted-foreground">→</span> {target}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+  if (q.type === 'fillblank') {
+    const parts = (q.textWithBlanks ?? '').split('___')
+    return (
+      <p className="text-sm leading-relaxed">
+        {parts.map((part, i) => (
+          <span key={i}>
+            {part}
+            {i < parts.length - 1 && (
+              <strong className="text-emerald-500">[{q.answers?.[i]?.[0] ?? '…'}]</strong>
+            )}
+          </span>
+        ))}
+      </p>
+    )
+  }
+  return null
+}
+
+function QuestionCard({ q, index }) {
+  return (
+    <AccentCard accent={ACCENT} className="cursor-default gap-2 p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary">{QUESTION_TYPE_LABELS[q.type] ?? q.type}</Badge>
+        <Badge variant="outline">{BLOOM_LABELS[q.bloom] ?? q.bloom}</Badge>
+        {(q.topic || q.lesson) && (
+          <span className="text-xs text-muted-foreground">
+            {[q.topic, q.lesson].filter(Boolean).join(' › ')}
+          </span>
+        )}
+      </div>
+      {q.type !== 'fillblank' && <p className="font-medium">{index + 1}. {q.question}</p>}
+      <QuestionBody q={q} />
+      <p className="text-xs text-muted-foreground">Trong đề: {q.resourceTitle}</p>
+    </AccentCard>
   )
 }
 
@@ -123,16 +278,6 @@ function PublicResourceCard({ resource, onLockedClick, revealedUrl }) {
         </p>
       )}
       {resource.description && <p className="text-sm text-muted-foreground">{resource.description}</p>}
-      {(resource.question_types?.length > 0 || resource.difficulty_levels?.length > 0) && (
-        <div className="flex flex-wrap gap-1">
-          {resource.question_types?.map((t) => (
-            <Badge key={t} variant="secondary">{t}</Badge>
-          ))}
-          {resource.difficulty_levels?.map((l) => (
-            <Badge key={l} variant="outline">{l}</Badge>
-          ))}
-        </div>
-      )}
       {resource.tags?.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {resource.tags.map((tag) => (
@@ -145,7 +290,7 @@ function PublicResourceCard({ resource, onLockedClick, revealedUrl }) {
           <Lock className="size-3.5" /> Nhập mật khẩu để xem
         </Button>
       )}
-      {(!resource.is_locked || revealedUrl) && (
+      {(!resource.is_locked || revealedUrl) && url && (
         isSelfHostedHtml(url) ? (
           <Button variant="outline" size="sm" className="w-fit" onClick={handleOpen} disabled={opening}>
             <ExternalLink className="size-3.5" /> {opening ? 'Đang mở...' : 'Mở link'}
@@ -166,21 +311,12 @@ function PublicResourceCard({ resource, onLockedClick, revealedUrl }) {
   )
 }
 
-function ResourceFilters({ resources, topic, setTopic, lesson, setLesson, types, toggleType, levels, toggleLevel }) {
-  const topics = useMemo(() => {
-    const set = new Set()
-    for (const r of resources) if (r.topic) set.add(r.topic)
-    return [...set].sort((a, b) => a.localeCompare(b, 'vi'))
-  }, [resources])
-
-  const lessons = useMemo(() => {
-    const set = new Set()
-    for (const r of resources) {
-      if (topic && r.topic !== topic) continue
-      if (r.lesson) set.add(r.lesson)
-    }
-    return [...set].sort((a, b) => a.localeCompare(b, 'vi'))
-  }, [resources, topic])
+function QuestionFilters({ questions, topic, setTopic, lesson, setLesson, types, toggleType, levels, toggleLevel }) {
+  const topics = useMemo(() => distinctSorted(questions.map((q) => q.topic)), [questions])
+  const lessons = useMemo(
+    () => distinctSorted(questions.filter((q) => !topic || q.topic === topic).map((q) => q.lesson)),
+    [questions, topic]
+  )
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3">
@@ -245,6 +381,14 @@ export default function ResourcesPublic() {
   })
   const allResources = resources ?? []
 
+  const { data: pool, isLoading: poolLoading } = useQuery({
+    queryKey: ['resources', 'public', 'questionPool', allResources.map((r) => r.id).join(',')],
+    queryFn: () => fetchQuestionPool(allResources),
+    enabled: allResources.length > 0,
+  })
+  const allQuestions = pool?.questions ?? []
+  const parsedIds = pool?.parsedIds ?? new Set()
+
   const [search, setSearch] = useState('')
   const [topic, setTopic] = useState('')
   const [lesson, setLesson] = useState('')
@@ -273,14 +417,25 @@ export default function ResourcesPublic() {
     else if (depth === 1) setSearchParams({ mon: validSubject })
   }
 
-  const gradeResources = allResources.filter((r) => r.subject === validSubject && r.grade_level === validGrade)
+  const gradeQuestions = allQuestions.filter((q) => q.subject === validSubject && q.grade_level === validGrade)
 
-  const filtered = gradeResources.filter((r) => {
-    if (topic && r.topic !== topic) return false
-    if (lesson && r.lesson !== lesson) return false
-    if (types.length && !types.some((t) => r.question_types?.includes(t))) return false
-    if (levels.length && !levels.some((l) => r.difficulty_levels?.includes(l))) return false
-    return matchesSearch(r, search.trim().toLowerCase())
+  const filteredQuestions = gradeQuestions.filter((q) => {
+    if (topic && q.topic !== topic) return false
+    if (lesson && q.lesson !== lesson) return false
+    if (types.length && !types.includes(QUESTION_TYPE_LABELS[q.type])) return false
+    if (levels.length && !levels.includes(BLOOM_LABELS[q.bloom])) return false
+    if (!search.trim()) return true
+    const s = search.trim().toLowerCase()
+    return q.question?.toLowerCase().includes(s) || q.resourceTitle?.toLowerCase().includes(s)
+  })
+
+  // Tai nguyen khac trong cung mon/khoi nhung khong tach duoc thanh cau hoi rieng
+  // (dang khoa chua mo, hoac link ngoai khong phai file cua tool) — van hien de
+  // khong mat du lieu, chi khong loc/hien theo tung cau duoc.
+  const otherResources = allResources.filter((r) => {
+    if (parsedIds.has(r.id)) return false
+    const c = classifyResource(r)
+    return c.subject === validSubject && c.grade_level === validGrade
   })
 
   const [lockedResource, setLockedResource] = useState(null)
@@ -295,7 +450,7 @@ export default function ResourcesPublic() {
 
   return (
     <div className="space-y-4">
-      <PageBanner title="Ngân hàng câu hỏi" subtitle="Đề trắc nghiệm theo môn, khối, chủ đề và mức độ" />
+      <PageBanner title="Ngân hàng câu hỏi" subtitle="Duyệt từng câu hỏi theo môn, khối, chủ đề và mức độ" />
 
       <Breadcrumb subject={validSubject} grade={validGrade} onNavigate={navigateTo} />
 
@@ -303,43 +458,61 @@ export default function ResourcesPublic() {
       {error && <p className="text-destructive">Lỗi: {error.message}</p>}
 
       {!isLoading && !error && !validSubject && (
-        <SubjectPicker resources={allResources} onSelect={openSubject} />
+        <SubjectPicker questions={allQuestions} onSelect={openSubject} />
       )}
 
       {!isLoading && !error && validSubject && !validGrade && (
-        <GradeGrid resources={allResources} subject={validSubject} onSelect={openGrade} />
+        <GradeGrid questions={allQuestions} subject={validSubject} onSelect={openGrade} />
       )}
 
-      {!isLoading && !error && validSubject && validGrade && (
+      {!error && validSubject && validGrade && (
         <div className="space-y-4">
-          <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên hoặc bài..." />
-          <ResourceFilters
-            resources={gradeResources}
-            topic={topic}
-            setTopic={setTopic}
-            lesson={lesson}
-            setLesson={setLesson}
-            types={types}
-            toggleType={toggleType}
-            levels={levels}
-            toggleLevel={toggleLevel}
-          />
-
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Layers className="size-4" /> {filtered.length} câu hỏi
-          </p>
-
-          {!filtered.length && <p className="text-muted-foreground">Chưa có câu hỏi nào khớp bộ lọc.</p>}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((resource) => (
-              <PublicResourceCard
-                key={resource.id}
-                resource={resource}
-                onLockedClick={setLockedResource}
-                revealedUrl={revealed[resource.id]}
+          {poolLoading && <p className="text-muted-foreground">Đang tải câu hỏi...</p>}
+          {!poolLoading && (
+            <>
+              <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo nội dung câu hỏi..." />
+              <QuestionFilters
+                questions={gradeQuestions}
+                topic={topic}
+                setTopic={setTopic}
+                lesson={lesson}
+                setLesson={setLesson}
+                types={types}
+                toggleType={toggleType}
+                levels={levels}
+                toggleLevel={toggleLevel}
               />
-            ))}
-          </div>
+
+              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <Layers className="size-4" /> {filteredQuestions.length} câu hỏi
+              </p>
+
+              {!filteredQuestions.length && !otherResources.length && (
+                <p className="text-muted-foreground">Chưa có câu hỏi nào khớp bộ lọc.</p>
+              )}
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredQuestions.map((q, i) => (
+                  <QuestionCard key={q.id} q={q} index={i} />
+                ))}
+              </div>
+
+              {otherResources.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <p className="text-sm font-medium text-muted-foreground">Tài liệu khác trong mục này</p>
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {otherResources.map((resource) => (
+                      <PublicResourceCard
+                        key={resource.id}
+                        resource={resource}
+                        onLockedClick={setLockedResource}
+                        revealedUrl={revealed[resource.id]}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 

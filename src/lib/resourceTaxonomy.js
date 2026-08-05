@@ -15,6 +15,24 @@ export const RESOURCE_GRADES = {
   khoi_9: { label: 'Khối 9' },
 }
 
-export const QUESTION_TYPE_OPTIONS = ['Nhiều lựa chọn', 'Đúng - Sai', 'Trả lời ngắn', 'Tự luận']
+// Trung voi dung "type" trong file de xuat tu tool Trac nghiem tuong tac
+// (xem TYPE_LABELS trong trac-nghiem-tuong-tac.html) — de cau hoi parse tu file
+// khop thang voi lua chon loc o day, khong can quy doi qua lai.
+export const QUESTION_TYPE_LABELS = {
+  single: 'Chọn 1 đáp án',
+  multi: 'Chọn nhiều đáp án',
+  order: 'Sắp xếp thứ tự',
+  match: 'Nối cột',
+  fillblank: 'Điền khuyết',
+  dragdrop: 'Kéo thả',
+}
+export const QUESTION_TYPE_OPTIONS = Object.values(QUESTION_TYPE_LABELS)
 
-export const DIFFICULTY_LEVEL_OPTIONS = ['Nhận biết', 'Thông hiểu', 'Vận dụng', 'Vận dụng cao']
+// Trung voi BLOOM_LABELS trong tool soan (biet/hieu/vandung/vandungcao).
+export const BLOOM_LABELS = {
+  biet: 'Biết',
+  hieu: 'Hiểu',
+  vandung: 'Vận dụng',
+  vandungcao: 'Vận dụng cao',
+}
+export const DIFFICULTY_LEVEL_OPTIONS = Object.values(BLOOM_LABELS)
