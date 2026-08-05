@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Folder, ChevronRight, Lock, ExternalLink, Layers, CheckCircle2 } from 'lucide-react'
+import { Folder, ChevronRight, Lock, ExternalLink, Layers } from 'lucide-react'
 import { fetchPublicResources, unlockResourceUrl } from '@/lib/queries/resources'
 import {
   RESOURCE_SUBJECTS,
@@ -14,7 +14,6 @@ import {
 import { isSelfHostedHtml, openSelfHostedHtml } from '@/lib/openSelfHostedHtml'
 import { parseQuizData, subjectFromTags, gradeFromTags } from '@/lib/quizParser'
 import { accentClasses } from '@/lib/accentColors'
-import { cn } from '@/lib/utils'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PageBanner from '@/components/PageBanner'
@@ -156,100 +155,10 @@ function GradeGrid({ questions, subject, onSelect }) {
   )
 }
 
-function OptionList({ options, correctIndexes }) {
-  return (
-    <div className="space-y-1">
-      {options.map((opt, i) => (
-        <div
-          key={i}
-          className={cn(
-            'flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm',
-            correctIndexes.includes(i) ? 'border-emerald-500/50 bg-emerald-500/10 font-medium' : 'border-border'
-          )}
-        >
-          {correctIndexes.includes(i) && <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />}
-          {opt}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function QuestionBody({ q }) {
-  if (q.type === 'single') return <OptionList options={q.options} correctIndexes={[q.correctIndex]} />
-  if (q.type === 'multi') return <OptionList options={q.options} correctIndexes={q.correctIndexes ?? []} />
-  if (q.type === 'order') {
-    return (
-      <ol className="list-inside list-decimal space-y-1 text-sm">
-        {q.items.map((item, i) => <li key={i}>{item}</li>)}
-      </ol>
-    )
-  }
-  if (q.type === 'match') {
-    return (
-      <div className="space-y-1 text-sm">
-        {(q.pairs ?? []).map((pair) => {
-          const a = q.colA?.find((x) => x.id === pair.a)?.text
-          const b = q.colB?.find((x) => x.id === pair.b)?.text
-          return (
-            <div key={pair.a} className="rounded-md border border-border px-3 py-1.5">
-              {a} <span className="text-muted-foreground">—</span> {b}
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-  if (q.type === 'dragdrop') {
-    return (
-      <div className="space-y-1 text-sm">
-        {Object.entries(q.mapping ?? {}).map(([itemId, targetId]) => {
-          const item = q.items?.find((x) => x.id === itemId)?.text
-          const target = q.targets?.find((x) => x.id === targetId)?.text
-          return (
-            <div key={itemId} className="rounded-md border border-border px-3 py-1.5">
-              {item} <span className="text-muted-foreground">→</span> {target}
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-  if (q.type === 'fillblank') {
-    const parts = (q.textWithBlanks ?? '').split('___')
-    return (
-      <p className="text-sm leading-relaxed">
-        {parts.map((part, i) => (
-          <span key={i}>
-            {part}
-            {i < parts.length - 1 && (
-              <strong className="text-emerald-500">[{q.answers?.[i]?.[0] ?? '…'}]</strong>
-            )}
-          </span>
-        ))}
-      </p>
-    )
-  }
-  return null
-}
-
-function QuestionCard({ q, index }) {
-  return (
-    <AccentCard accent={ACCENT} className="cursor-default gap-2 p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary">{QUESTION_TYPE_LABELS[q.type] ?? q.type}</Badge>
-        <Badge variant="outline">{BLOOM_LABELS[q.bloom] ?? q.bloom}</Badge>
-        {(q.topic || q.lesson) && (
-          <span className="text-xs text-muted-foreground">
-            {[q.topic, q.lesson].filter(Boolean).join(' › ')}
-          </span>
-        )}
-      </div>
-      {q.type !== 'fillblank' && <p className="font-medium">{index + 1}. {q.question}</p>}
-      <QuestionBody q={q} />
-      <p className="text-xs text-muted-foreground">Trong đề: {q.resourceTitle}</p>
-    </AccentCard>
-  )
+// Theo yeu cau: chi can noi dung cau hoi, khong dap an, khong nhan muc do —
+// gop chung 1 khung, van loc duoc qua bo loc phia tren.
+function questionText(q) {
+  return q.type === 'fillblank' ? q.textWithBlanks ?? '' : q.question ?? ''
 }
 
 function PublicResourceCard({ resource, onLockedClick, revealedUrl }) {
@@ -490,11 +399,15 @@ export default function ResourcesPublic() {
               {!filteredQuestions.length && !otherResources.length && (
                 <p className="text-muted-foreground">Chưa có câu hỏi nào khớp bộ lọc.</p>
               )}
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {filteredQuestions.map((q, i) => (
-                  <QuestionCard key={q.id} q={q} index={i} />
-                ))}
-              </div>
+              {filteredQuestions.length > 0 && (
+                <div className="divide-y divide-border rounded-lg border border-border bg-card">
+                  {filteredQuestions.map((q, i) => (
+                    <p key={q.id} className="px-4 py-2.5 text-sm">
+                      {i + 1}. {questionText(q)}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               {otherResources.length > 0 && (
                 <div className="space-y-2 pt-2">
