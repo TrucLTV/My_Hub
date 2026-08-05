@@ -19,26 +19,44 @@ import AccentCard from '@/components/AccentCard'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const ACCENT = 'violet'
 const ALL_VALUE = '__all__'
 
-function distinctSorted(values) {
+export function distinctSorted(values) {
   return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'vi'))
 }
 
 // Theo yeu cau: chi can noi dung cau hoi, khong dap an, khong nhan muc do — gop
 // chung 1 khung, van loc duoc qua bo loc phia tren.
-function questionText(q) {
+export function questionText(q) {
   return q.type === 'fillblank' ? q.textWithBlanks ?? '' : q.question ?? ''
 }
 
-function Breadcrumb({ subject, grade, onNavigate }) {
+// Goi lai useQuery pool voi cung queryKey (prefix + danh sach id resource) se
+// dung chung cache — dung o ca QuestionBank va ExamComposer ma khong ton them
+// request neu 2 noi cung 1 tap resources.
+export function useQuestionPool(resources, poolQueryKeyPrefix = 'resources') {
+  const allResources = resources ?? []
+  const { data: pool, isLoading } = useQuery({
+    queryKey: [poolQueryKeyPrefix, 'questionPool', allResources.map((r) => r.id).join(',')],
+    queryFn: () => fetchQuestionPool(allResources),
+    enabled: allResources.length > 0,
+  })
+  return {
+    questions: pool?.questions ?? [],
+    parsedIds: pool?.parsedIds ?? new Set(),
+    isLoading,
+  }
+}
+
+export function Breadcrumb({ subject, grade, onNavigate, rootLabel = 'Ngân hàng câu hỏi' }) {
   return (
     <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
       <button onClick={() => onNavigate(0)} className="hover:text-foreground hover:underline">
-        Ngân hàng câu hỏi
+        {rootLabel}
       </button>
       {subject && (
         <span className="flex items-center gap-1">
@@ -60,10 +78,10 @@ function Breadcrumb({ subject, grade, onNavigate }) {
   )
 }
 
-function SubjectPicker({ questions, onSelect }) {
+export function SubjectPicker({ questions, onSelect }) {
   return (
     <div className="mx-auto max-w-sm space-y-1 py-8">
-      <Label>Chọn môn để xem ngân hàng câu hỏi</Label>
+      <Label>Chọn môn</Label>
       <Select value="" onValueChange={onSelect}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Chọn môn..." />
@@ -80,7 +98,7 @@ function SubjectPicker({ questions, onSelect }) {
   )
 }
 
-function GradeGrid({ questions, subject, onSelect }) {
+export function GradeGrid({ questions, subject, onSelect }) {
   const colors = accentClasses[ACCENT]
   return (
     <div className="flex flex-wrap justify-center gap-4 py-6">
@@ -163,7 +181,7 @@ function OtherResourceCard({ resource, onLockedClick, revealedUrl }) {
   )
 }
 
-function QuestionFilters({ questions, topic, setTopic, lesson, setLesson, types, toggleType, levels, toggleLevel }) {
+export function QuestionFilters({ questions, topic, setTopic, lesson, setLesson, types, toggleType, levels, toggleLevel }) {
   const topics = useMemo(() => distinctSorted(questions.map((q) => q.topic)), [questions])
   const lessons = useMemo(
     () => distinctSorted(questions.filter((q) => !topic || q.topic === topic).map((q) => q.lesson)),
@@ -220,10 +238,15 @@ function QuestionFilters({ questions, topic, setTopic, lesson, setLesson, types,
   )
 }
 
-function QuestionRow({ q, index, editable, onEditQuestion, onDeleteQuestion }) {
+function QuestionRow({ q, index, editable, onEditQuestion, onDeleteQuestion, selectable, selected, onToggleSelect }) {
   return (
     <div className="flex items-start justify-between gap-2 px-4 py-2.5">
-      <p className="text-sm">{index + 1}. {questionText(q)}</p>
+      <div className="flex items-start gap-2">
+        {selectable && (
+          <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(q)} className="mt-0.5 shrink-0" />
+        )}
+        <p className="text-sm">{index + 1}. {questionText(q)}</p>
+      </div>
       {editable && (
         <div className="flex shrink-0 gap-1">
           <Button variant="ghost" size="icon-sm" onClick={() => onEditQuestion(q)} aria-label="Sửa câu hỏi">
@@ -238,10 +261,106 @@ function QuestionRow({ q, index, editable, onEditQuestion, onDeleteQuestion }) {
   )
 }
 
-// Component dung chung cho ca trang public (ResourcesPublic) va trang admin
-// (AdminResources): duyet Mon -> Khoi -> danh sach cau hoi (loc theo chu de/
-// bai/dang cau/muc do). Ben admin them editable=true de co nut Sua/Xoa tren
-// tung dong cau hoi.
+// Phan hien thi thuan (khong gan URL): search + bo loc + danh sach cau hoi +
+// tai nguyen khac. Dung lai duoc o ca QuestionBank (gan URL) va ExamComposer
+// (tu quan ly subject/grade rieng, khong dung chung URL voi tab duyet).
+export function QuestionBrowserView({
+  questions,
+  otherResources,
+  onLockedClick,
+  revealedUrls = {},
+  editable = false,
+  onEditQuestion,
+  onDeleteQuestion,
+  selectable = false,
+  selectedIds,
+  onToggleSelect,
+  emptyHint = 'Chưa có câu hỏi nào khớp bộ lọc.',
+}) {
+  const [search, setSearch] = useState('')
+  const [topic, setTopic] = useState('')
+  const [lesson, setLesson] = useState('')
+  const [types, setTypes] = useState([])
+  const [levels, setLevels] = useState([])
+
+  function toggleType(t) {
+    setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]))
+  }
+  function toggleLevel(l) {
+    setLevels((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]))
+  }
+
+  const filteredQuestions = questions.filter((q) => {
+    if (topic && q.topic !== topic) return false
+    if (lesson && q.lesson !== lesson) return false
+    if (types.length && !types.includes(QUESTION_TYPE_LABELS[q.type])) return false
+    if (levels.length && !levels.includes(BLOOM_LABELS[q.bloom])) return false
+    if (!search.trim()) return true
+    const s = search.trim().toLowerCase()
+    return q.question?.toLowerCase().includes(s) || q.resourceTitle?.toLowerCase().includes(s)
+  })
+
+  return (
+    <>
+      <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo nội dung câu hỏi..." />
+      <QuestionFilters
+        questions={questions}
+        topic={topic}
+        setTopic={setTopic}
+        lesson={lesson}
+        setLesson={setLesson}
+        types={types}
+        toggleType={toggleType}
+        levels={levels}
+        toggleLevel={toggleLevel}
+      />
+
+      <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Layers className="size-4" /> {filteredQuestions.length} câu hỏi
+      </p>
+
+      {!filteredQuestions.length && !otherResources?.length && (
+        <p className="text-muted-foreground">{emptyHint}</p>
+      )}
+      {filteredQuestions.length > 0 && (
+        <div className="divide-y divide-border rounded-lg border border-border bg-card">
+          {filteredQuestions.map((q, i) => (
+            <QuestionRow
+              key={q.id}
+              q={q}
+              index={i}
+              editable={editable}
+              onEditQuestion={onEditQuestion}
+              onDeleteQuestion={onDeleteQuestion}
+              selectable={selectable}
+              selected={selectedIds?.has(q.id)}
+              onToggleSelect={onToggleSelect}
+            />
+          ))}
+        </div>
+      )}
+
+      {otherResources?.length > 0 && (
+        <div className="space-y-2 pt-2">
+          <p className="text-sm font-medium text-muted-foreground">Tài liệu khác trong mục này</p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {otherResources.map((resource) => (
+              <OtherResourceCard
+                key={resource.id}
+                resource={resource}
+                onLockedClick={onLockedClick}
+                revealedUrl={revealedUrls[resource.id]}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// Component gan URL, dung cho tab "Duyet cau hoi": duyet Mon -> Khoi -> danh
+// sach cau hoi. Ben admin them editable=true de co nut Sua/Xoa tren tung dong.
 export default function QuestionBank({
   resources,
   resourcesLoading,
@@ -260,27 +379,7 @@ export default function QuestionBank({
   const validGrade = validSubject && grade && RESOURCE_GRADES[grade] ? grade : null
 
   const allResources = resources ?? []
-
-  const { data: pool, isLoading: poolLoading } = useQuery({
-    queryKey: [poolQueryKeyPrefix, 'questionPool', allResources.map((r) => r.id).join(',')],
-    queryFn: () => fetchQuestionPool(allResources),
-    enabled: allResources.length > 0,
-  })
-  const allQuestions = pool?.questions ?? []
-  const parsedIds = pool?.parsedIds ?? new Set()
-
-  const [search, setSearch] = useState('')
-  const [topic, setTopic] = useState('')
-  const [lesson, setLesson] = useState('')
-  const [types, setTypes] = useState([])
-  const [levels, setLevels] = useState([])
-
-  function toggleType(t) {
-    setTypes((prev) => (prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]))
-  }
-  function toggleLevel(l) {
-    setLevels((prev) => (prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]))
-  }
+  const { questions: allQuestions, parsedIds, isLoading: poolLoading } = useQuestionPool(allResources, poolQueryKeyPrefix)
 
   function openSubject(key) {
     setSearchParams({ mon: key })
@@ -289,29 +388,15 @@ export default function QuestionBank({
     setSearchParams({ mon: validSubject, khoi: key })
   }
   function navigateTo(depth) {
-    setTopic('')
-    setLesson('')
-    setTypes([])
-    setLevels([])
     if (depth === 0) setSearchParams({})
     else if (depth === 1) setSearchParams({ mon: validSubject })
   }
 
   const gradeQuestions = allQuestions.filter((q) => q.subject === validSubject && q.grade_level === validGrade)
 
-  const filteredQuestions = gradeQuestions.filter((q) => {
-    if (topic && q.topic !== topic) return false
-    if (lesson && q.lesson !== lesson) return false
-    if (types.length && !types.includes(QUESTION_TYPE_LABELS[q.type])) return false
-    if (levels.length && !levels.includes(BLOOM_LABELS[q.bloom])) return false
-    if (!search.trim()) return true
-    const s = search.trim().toLowerCase()
-    return q.question?.toLowerCase().includes(s) || q.resourceTitle?.toLowerCase().includes(s)
-  })
-
-  // Tai nguyen khac trong cung mon/khoi nhung khong tach duoc thanh cau hoi rieng
-  // (dang khoa chua mo, hoac link ngoai khong phai file cua tool) — van hien de
-  // khong mat du lieu, chi khong loc/hien theo tung cau duoc.
+  // Tai nguyen khac trong cung mon/khoi nhung khong tach duoc thanh cau hoi
+  // rieng (dang khoa chua mo, hoac link ngoai khong phai file cua tool) — van
+  // hien de khong mat du lieu, chi khong loc/hien theo tung cau duoc.
   const otherResources = allResources.filter((r) => {
     if (parsedIds.has(r.id)) return false
     const c = classifyResource(r)
@@ -337,58 +422,15 @@ export default function QuestionBank({
         <div className="space-y-4">
           {poolLoading && <p className="text-muted-foreground">Đang tải câu hỏi...</p>}
           {!poolLoading && (
-            <>
-              <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo nội dung câu hỏi..." />
-              <QuestionFilters
-                questions={gradeQuestions}
-                topic={topic}
-                setTopic={setTopic}
-                lesson={lesson}
-                setLesson={setLesson}
-                types={types}
-                toggleType={toggleType}
-                levels={levels}
-                toggleLevel={toggleLevel}
-              />
-
-              <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Layers className="size-4" /> {filteredQuestions.length} câu hỏi
-              </p>
-
-              {!filteredQuestions.length && !otherResources.length && (
-                <p className="text-muted-foreground">Chưa có câu hỏi nào khớp bộ lọc.</p>
-              )}
-              {filteredQuestions.length > 0 && (
-                <div className="divide-y divide-border rounded-lg border border-border bg-card">
-                  {filteredQuestions.map((q, i) => (
-                    <QuestionRow
-                      key={q.id}
-                      q={q}
-                      index={i}
-                      editable={editable}
-                      onEditQuestion={onEditQuestion}
-                      onDeleteQuestion={onDeleteQuestion}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {otherResources.length > 0 && (
-                <div className="space-y-2 pt-2">
-                  <p className="text-sm font-medium text-muted-foreground">Tài liệu khác trong mục này</p>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {otherResources.map((resource) => (
-                      <OtherResourceCard
-                        key={resource.id}
-                        resource={resource}
-                        onLockedClick={onLockedClick}
-                        revealedUrl={revealedUrls[resource.id]}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
+            <QuestionBrowserView
+              questions={gradeQuestions}
+              otherResources={otherResources}
+              onLockedClick={onLockedClick}
+              revealedUrls={revealedUrls}
+              editable={editable}
+              onEditQuestion={onEditQuestion}
+              onDeleteQuestion={onDeleteQuestion}
+            />
           )}
         </div>
       )}
