@@ -19,6 +19,14 @@ export function parseQuizData(html) {
   }
 }
 
+// Ghi nguoc 1 QUIZ_DATA da sua vao dung cho cu trong html — giu nguyen toan bo
+// CSS/engine JS ban dau (khong can port lai engine cua tool soan qua MyHub),
+// chi thay the doan JSON.
+export function replaceQuizData(html, data) {
+  const json = JSON.stringify(data).replace(/<\/script/gi, '<\\/script')
+  return html.replace(QUIZ_DATA_RE, () => `var QUIZ_DATA = ${json};\n`)
+}
+
 // Tool gui-tu-dong dang co bug ghi tag la "Khối khoi_6" (nhet ca prefix "khoi_"
 // vao thay vi chi so 6) thay vi "Khối 6" — chap nhan ca 2 dang cho chac.
 const GRADE_TAG_RE = /^Khối\s+(?:khoi_)?(\d+)$/i

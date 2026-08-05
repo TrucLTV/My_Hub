@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchAllResources, createResource, updateResource, deleteResource } from '@/lib/queries/resources'
+import { updateQuestionInResource, deleteQuestionFromResource } from '@/lib/queries/quizQuestions'
 import { RESOURCE_SUBJECTS, RESOURCE_GRADES, QUESTION_TYPE_OPTIONS, DIFFICULTY_LEVEL_OPTIONS } from '@/lib/resourceTaxonomy'
 import { isSelfHostedHtml, openSelfHostedHtml } from '@/lib/openSelfHostedHtml'
 import { VISIBILITY_OPTIONS, visibilityToFields, fieldsToVisibility } from '@/lib/visibility'
+import QuestionBank from '@/components/QuestionBank'
+import EditQuestionDialog from '@/components/EditQuestionDialog'
 import SearchBar from '@/components/SearchBar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionPanel } from '@/components/ui/accordion'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   Dialog,
   DialogContent,
@@ -150,6 +154,8 @@ export default function AdminResources() {
   const [form, setForm] = useState(emptyForm)
   const [search, setSearch] = useState('')
   const [openGroups, setOpenGroups] = useState([])
+  const [view, setView] = useState('questions')
+  const [editingQuestion, setEditingQuestion] = useState(null)
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['resources'] })
 
@@ -159,6 +165,25 @@ export default function AdminResources() {
     onSuccess: invalidate,
   })
   const deleteMutation = useMutation({ mutationFn: deleteResource, onSuccess: invalidate })
+
+  const deleteQuestionMutation = useMutation({
+    mutationFn: ({ resource, questionIndex }) => deleteQuestionFromResource(resource, questionIndex),
+    onSuccess: invalidate,
+  })
+
+  function handleDeleteQuestion(q) {
+    const resource = (resources ?? []).find((r) => r.id === q.resourceId)
+    if (!resource) return
+    if (!window.confirm(`Xóa câu hỏi "${(q.question ?? q.textWithBlanks ?? '').slice(0, 80)}"?`)) return
+    deleteQuestionMutation.mutate({ resource, questionIndex: q.questionIndex })
+  }
+
+  async function handleSaveQuestion(newQuestionData) {
+    const resource = (resources ?? []).find((r) => r.id === editingQuestion.resourceId)
+    if (!resource) throw new Error('Không tìm thấy đề chứa câu hỏi này.')
+    await updateQuestionInResource(resource, editingQuestion.questionIndex, newQuestionData)
+    invalidate()
+  }
 
   function openCreate() {
     setEditingId(null)
@@ -361,40 +386,65 @@ export default function AdminResources() {
         </Dialog>
       </div>
 
-      <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên, chủ đề, bài hoặc tag..." />
+      <Tabs value={view} onValueChange={setView}>
+        <TabsList>
+          <TabsTrigger value="questions">Xem theo câu hỏi</TabsTrigger>
+          <TabsTrigger value="resources">Xem theo đề (quản lý file)</TabsTrigger>
+        </TabsList>
 
-      {groups.length === 0 && (
-        <p className="text-muted-foreground">Không tìm thấy mục nào khớp với "{search}".</p>
-      )}
+        <TabsContent value="questions" className="pt-3">
+          <QuestionBank
+            resources={resources}
+            editable
+            onEditQuestion={setEditingQuestion}
+            onDeleteQuestion={handleDeleteQuestion}
+          />
+        </TabsContent>
 
-      <Accordion value={openGroups} onValueChange={setOpenGroups} className="space-y-3">
-        {groups.map(([groupLabel, items]) => (
-          <AccordionItem
-            key={groupLabel}
-            value={groupLabel}
-            className={`rounded-lg border px-4 shadow-sm ${
-              groupLabel === UNCLASSIFIED_LABEL ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card'
-            }`}
-          >
-            <AccordionTrigger>
-              <span className="flex flex-1 items-baseline justify-between gap-2">
-                <span className={groupLabel === UNCLASSIFIED_LABEL ? 'text-amber-500' : undefined}>{groupLabel}</span>
-                <span className="text-xs font-normal text-muted-foreground">{items.length} mục</span>
-              </span>
-            </AccordionTrigger>
-            <AccordionPanel className="space-y-2">
-              {items.map((resource) => (
-                <ResourceRow
-                  key={resource.id}
-                  resource={resource}
-                  onEdit={openEdit}
-                  onDelete={(id) => deleteMutation.mutate(id)}
-                />
-              ))}
-            </AccordionPanel>
-          </AccordionItem>
-        ))}
-      </Accordion>
+        <TabsContent value="resources" className="space-y-4 pt-3">
+          <SearchBar value={search} onChange={setSearch} placeholder="Tìm theo tên, chủ đề, bài hoặc tag..." />
+
+          {groups.length === 0 && (
+            <p className="text-muted-foreground">Không tìm thấy mục nào khớp với "{search}".</p>
+          )}
+
+          <Accordion value={openGroups} onValueChange={setOpenGroups} className="space-y-3">
+            {groups.map(([groupLabel, items]) => (
+              <AccordionItem
+                key={groupLabel}
+                value={groupLabel}
+                className={`rounded-lg border px-4 shadow-sm ${
+                  groupLabel === UNCLASSIFIED_LABEL ? 'border-amber-500/40 bg-amber-500/5' : 'border-border bg-card'
+                }`}
+              >
+                <AccordionTrigger>
+                  <span className="flex flex-1 items-baseline justify-between gap-2">
+                    <span className={groupLabel === UNCLASSIFIED_LABEL ? 'text-amber-500' : undefined}>{groupLabel}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{items.length} mục</span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionPanel className="space-y-2">
+                  {items.map((resource) => (
+                    <ResourceRow
+                      key={resource.id}
+                      resource={resource}
+                      onEdit={openEdit}
+                      onDelete={(id) => deleteMutation.mutate(id)}
+                    />
+                  ))}
+                </AccordionPanel>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </TabsContent>
+      </Tabs>
+
+      <EditQuestionDialog
+        question={editingQuestion}
+        open={editingQuestion !== null}
+        onOpenChange={(v) => !v && setEditingQuestion(null)}
+        onSubmit={handleSaveQuestion}
+      />
     </div>
   )
 }
