@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Gamepad2, Link2, Clapperboard, FolderOpen, ArrowRight, Sparkles } from 'lucide-react'
+import { Gamepad2, Link2, Clapperboard, FolderOpen, ArrowRight, Sparkles, Terminal, ExternalLink } from 'lucide-react'
 import { fetchPublicMiniGames } from '@/lib/queries/miniGames'
 import { fetchPublicResources } from '@/lib/queries/resources'
 import { fetchPublicMedia } from '@/lib/queries/media'
@@ -10,12 +10,47 @@ import { timeAgo } from '@/lib/timeAgo'
 import { Badge } from '@/components/ui/badge'
 import { CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import AccentCard from '@/components/AccentCard'
+import { CPP_EDU_HUB_URL } from '@/components/Layout'
 
 const textColor = {
   sky: 'text-sky-400',
   violet: 'text-violet-400',
   amber: 'text-amber-400',
   emerald: 'text-emerald-400',
+}
+
+function CppEduHubCard() {
+  return (
+    <AccentCard accent="rose" size="sm" className="w-64 shrink-0">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-rose-400/20 text-rose-300 shadow-[0_0_20px_-4px] shadow-rose-400/60">
+            <Terminal className="size-3.5" />
+          </span>
+          Công cụ C++
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="min-h-16">
+        <p className="text-sm text-muted-foreground">
+          Bộ tool luyện C++ (CPP-EDU-HUB): chấm bài, KHBD, trắc nghiệm, mind map...
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground/70">
+          Chạy trên máy bạn — cần bật server trước khi mở.
+        </p>
+      </CardContent>
+      <CardFooter>
+        <a
+          href={CPP_EDU_HUB_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Mở CPP-EDU-HUB
+          <ExternalLink className="size-3.5" />
+        </a>
+      </CardFooter>
+    </AccentCard>
+  )
 }
 
 const sections = [
@@ -145,6 +180,7 @@ export default function Home() {
             {bySection.map(({ key, ...section }) => (
               <CategoryCard key={key} {...section} />
             ))}
+            <CppEduHubCard />
           </div>
         </div>
       </div>

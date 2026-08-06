@@ -31,4 +31,12 @@ export const accentClasses = {
     hoverShadow: 'hover:shadow-emerald-500/40',
     gradient: 'to-emerald-400',
   },
+  rose: {
+    border: 'border-t-rose-400',
+    bg: 'bg-gradient-to-br from-rose-500/20 to-rose-500/5',
+    iconBg: 'bg-rose-400/20 shadow-[0_0_20px_-4px] shadow-rose-400/60',
+    iconText: 'text-rose-300',
+    hoverShadow: 'hover:shadow-rose-500/40',
+    gradient: 'to-rose-400',
+  },
 }
