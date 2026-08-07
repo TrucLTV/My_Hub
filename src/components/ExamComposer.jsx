@@ -8,6 +8,7 @@ import {
   QuestionBrowserView,
   useQuestionPool,
   questionText,
+  distinctSorted,
 } from '@/components/QuestionBank'
 import {
   isPrintable,
@@ -21,10 +22,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import AccentCard from '@/components/AccentCard'
 
 const BLOOM_KEYS = ['biet', 'hieu', 'vandung', 'vandungcao']
+const ALL_VALUE = '__all__'
 
 function ExamCart({ questions, onRemove, onMove }) {
   if (!questions.length) {
@@ -57,15 +60,58 @@ function ExamCart({ questions, onRemove, onMove }) {
   )
 }
 
-function MatrixBuilder({ candidates, counts, setCounts, onGenerate, warnings }) {
+function MatrixBuilder({
+  allCandidates,
+  candidates,
+  topic,
+  setTopic,
+  lesson,
+  setLesson,
+  counts,
+  setCounts,
+  onGenerate,
+  warnings,
+}) {
+  const topics = distinctSorted(allCandidates.map((q) => q.topic))
+  const lessons = distinctSorted(allCandidates.filter((q) => !topic || q.topic === topic).map((q) => q.lesson))
   const available = Object.fromEntries(BLOOM_KEYS.map((k) => [k, candidates.filter((q) => q.bloom === k).length]))
   const total = BLOOM_KEYS.reduce((sum, k) => sum + (Number(counts[k]) || 0), 0)
 
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3">
       <p className="text-sm text-muted-foreground">
-        Chọn số lượng câu hỏi cần lấy ngẫu nhiên cho từng mức độ (trong phạm vi câu hỏi in-giấy-được, đã áp dụng bộ lọc Chủ đề/Bài nếu có ở tab Soạn thủ công).
+        Chọn số lượng câu hỏi cần lấy ngẫu nhiên cho từng mức độ (trong phạm vi câu hỏi in-giấy-được, đã lọc theo Chủ đề/Bài bên dưới nếu có chọn).
       </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label>Chủ đề</Label>
+          <Select value={topic || ALL_VALUE} onValueChange={(v) => { setTopic(v === ALL_VALUE ? '' : v); setLesson('') }}>
+            <SelectTrigger className="w-full">
+              <SelectValue>{() => topic || 'Tất cả chủ đề'}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Tất cả chủ đề</SelectItem>
+              {topics.map((t) => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Bài</Label>
+          <Select value={lesson || ALL_VALUE} onValueChange={(v) => setLesson(v === ALL_VALUE ? '' : v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue>{() => lesson || 'Tất cả bài'}</SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_VALUE}>Tất cả bài</SelectItem>
+              {lessons.map((l) => (
+                <SelectItem key={l} value={l}>{l}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {BLOOM_KEYS.map((k) => (
           <div key={k} className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
@@ -105,6 +151,8 @@ export default function ExamComposer({ resources }) {
   const [mode, setMode] = useState('manual')
   const [examQuestions, setExamQuestions] = useState([])
   const [counts, setCounts] = useState({ biet: 0, hieu: 0, vandung: 0, vandungcao: 0 })
+  const [matrixTopic, setMatrixTopic] = useState('')
+  const [matrixLesson, setMatrixLesson] = useState('')
   const [matrixWarnings, setMatrixWarnings] = useState([])
   const [title, setTitle] = useState('Đề kiểm tra')
   const [duration, setDuration] = useState('45')
@@ -114,10 +162,15 @@ export default function ExamComposer({ resources }) {
   const { questions: allQuestions, isLoading: poolLoading } = useQuestionPool(resources, 'resources-public')
   const gradeQuestions = allQuestions.filter((q) => q.subject === subject && q.grade_level === grade)
   const printableCandidates = gradeQuestions.filter(isPrintable)
+  const matrixCandidates = printableCandidates.filter(
+    (q) => (!matrixTopic || q.topic === matrixTopic) && (!matrixLesson || q.lesson === matrixLesson)
+  )
 
   function navigateTo(depth) {
     setExamQuestions([])
     setMatrixWarnings([])
+    setMatrixTopic('')
+    setMatrixLesson('')
     if (depth === 0) { setSubject(null); setGrade(null) }
     else if (depth === 1) setGrade(null)
   }
@@ -140,7 +193,7 @@ export default function ExamComposer({ resources }) {
   }
 
   function generateFromMatrix() {
-    const { selected, warnings } = sampleByMatrix(printableCandidates, counts)
+    const { selected, warnings } = sampleByMatrix(matrixCandidates, counts)
     setExamQuestions(selected)
     setMatrixWarnings(warnings)
   }
@@ -216,7 +269,12 @@ export default function ExamComposer({ resources }) {
 
             <TabsContent value="matrix" className="pt-3">
               <MatrixBuilder
-                candidates={printableCandidates}
+                allCandidates={printableCandidates}
+                candidates={matrixCandidates}
+                topic={matrixTopic}
+                setTopic={setMatrixTopic}
+                lesson={matrixLesson}
+                setLesson={setMatrixLesson}
                 counts={counts}
                 setCounts={setCounts}
                 onGenerate={generateFromMatrix}
