@@ -5,6 +5,7 @@ import { fetchRosters } from '@/lib/queries/rosters'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import RosterPicker from '@/components/miniGameTools/RosterPicker'
+import ResultReveal from '@/components/miniGameTools/ResultReveal'
 
 function shuffled(n) {
   const arr = Array.from({ length: n }, (_, i) => i)
@@ -42,7 +43,7 @@ export default function CardDraw() {
   function pickCard(position, studentIndex) {
     if (flipped.has(position)) return
     setFlipped((prev) => new Set(prev).add(position))
-    setLastPicked({ index: studentIndex, name: students[studentIndex] })
+    setLastPicked({ index: studentIndex, name: students[studentIndex], position })
   }
 
   function resetDraw() {
@@ -101,16 +102,12 @@ export default function CardDraw() {
             <Button variant="outline" onClick={resetDraw}>Rút lại</Button>
           </div>
 
-          {lastPicked && (
-            <div className="mx-auto flex w-fit flex-col items-center gap-2">
-              <span className="flex size-16 shrink-0 animate-in items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 duration-500">
-                {lastPicked.index + 1}
-              </span>
-              <span className="animate-in rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
-                {lastPicked.name}
-              </span>
-            </div>
-          )}
+          <ResultReveal
+            resultKey={lastPicked ? lastPicked.position : null}
+            icon={lastPicked ? lastPicked.index + 1 : null}
+            name={lastPicked?.name}
+            accent="violet"
+          />
 
           {allFlipped && (
             <p className="text-center font-medium text-muted-foreground">

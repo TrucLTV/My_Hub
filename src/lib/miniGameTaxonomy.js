@@ -12,4 +12,5 @@ export const DELIVERY_TYPES = {
   web_tool: { label: 'Chạy trên web' },
   downloadable: { label: 'Tải về' },
   external_link: { label: 'Link ngoài' },
+  idea: { label: 'Ý tưởng chờ code' },
 }

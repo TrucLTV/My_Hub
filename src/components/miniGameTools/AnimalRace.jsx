@@ -2,10 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Flag } from 'lucide-react'
 import { fetchRosters } from '@/lib/queries/rosters'
+import { pickRandomIndex } from '@/lib/randomPick'
+import { playWhoosh } from '@/lib/gameSound'
+import { useDrawnTracker } from '@/hooks/useDrawnTracker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import RosterPicker from '@/components/miniGameTools/RosterPicker'
+import ResultReveal from '@/components/miniGameTools/ResultReveal'
 
 const RACER_EMOJIS = ['🐇', '🐢', '🚗', '🐎', '🦁', '🐆', '🚀', '🐕']
 const TRACK_WIDTH = 560
@@ -27,28 +31,27 @@ export default function AnimalRace() {
   )
 
   const [removeAfterDraw, setRemoveAfterDraw] = useState(true)
-  const [drawn, setDrawn] = useState(new Set())
+  const { drawn, markDrawn, resetDraw: resetDrawnTracker, isDrawn } = useDrawnTracker(roster?.id)
   const [raceSeconds, setRaceSeconds] = useState(DEFAULT_RACE_SECONDS)
   const [racing, setRacing] = useState(false)
   const [result, setResult] = useState(null)
+  const raceRoundRef = useRef(0)
 
   const trackRef = useRef(null)
   const laneRefs = useRef({})
 
   useEffect(() => {
-    setDrawn(new Set())
     setResult(null)
     setRacing(false)
   }, [roster?.id])
 
   function selectRoster(id) {
     setRosterId(id)
-    setDrawn(new Set())
     setResult(null)
   }
 
   function resetRace() {
-    setDrawn(new Set())
+    resetDrawnTracker()
     setResult(null)
     students.forEach((_, i) => {
       const el = laneRefs.current[i]
@@ -61,12 +64,14 @@ export default function AnimalRace() {
 
   function startRace() {
     if (racing || students.length === 0) return
-    const pool = students.map((_, i) => i).filter((i) => (removeAfterDraw ? !drawn.has(i) : true))
-    if (pool.length === 0) return
+    const winnerIdx = pickRandomIndex(students.length, drawn, removeAfterDraw)
+    if (winnerIdx === null) return
 
     setRacing(true)
     setResult(null)
-    const winnerIdx = pool[Math.floor(Math.random() * pool.length)]
+    playWhoosh()
+    raceRoundRef.current += 1
+    const myRound = raceRoundRef.current
     const winnerDurationMs = raceSeconds * 1000
     const finishX = TRACK_WIDTH - LANE_HEIGHT
 
@@ -92,8 +97,8 @@ export default function AnimalRace() {
         el.style.transitionDuration = '0ms'
         el.style.transform = `translateX(${currentX}px)`
       })
-      setResult({ index: winnerIdx, name: students[winnerIdx] })
-      if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(winnerIdx))
+      setResult({ index: winnerIdx, name: students[winnerIdx], round: myRound })
+      if (removeAfterDraw) markDrawn(winnerIdx)
       setRacing(false)
     }, winnerDurationMs)
   }
@@ -145,7 +150,7 @@ export default function AnimalRace() {
           >
             <div className="pointer-events-none absolute top-0 right-3 bottom-0 w-0.5 bg-[repeating-linear-gradient(0deg,white,white_4px,transparent_4px,transparent_8px)] opacity-70" />
             {students.map((name, i) => {
-              const isDrawn = drawn.has(i)
+              const drawnAlready = isDrawn(i)
               return (
                 <div key={i} className="relative border-b border-dashed border-white/10" style={{ height: LANE_HEIGHT }}>
                   <div
@@ -157,14 +162,14 @@ export default function AnimalRace() {
                   >
                     <span
                       className={
-                        isDrawn
+                        drawnAlready
                           ? 'rounded-full bg-black/30 px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-white/40'
                           : 'rounded-full bg-black/40 px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap text-white'
                       }
                     >
                       {i + 1}. {name}
                     </span>
-                    <span className={isDrawn ? 'text-xl leading-none opacity-40 grayscale' : 'text-xl leading-none'}>
+                    <span className={drawnAlready ? 'text-xl leading-none opacity-40 grayscale' : 'text-xl leading-none'}>
                       {racerEmojis[i]}
                     </span>
                   </div>
@@ -180,17 +185,13 @@ export default function AnimalRace() {
             <Button variant="outline" onClick={resetRace}>Reset</Button>
           </div>
 
-          {result && (
-            <div className="mx-auto flex w-fit flex-col items-center gap-2">
-              <span className="flex size-16 shrink-0 animate-in items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 duration-500">
-                {result.index + 1}
-              </span>
-              <span className="animate-in flex items-center gap-2 rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
-                <span>{racerEmojis[result.index]}</span>
-                <span>{result.name}</span>
-              </span>
-            </div>
-          )}
+          <ResultReveal
+            resultKey={result ? result.round : null}
+            icon={result ? racerEmojis[result.index] : null}
+            subtitle={result ? `Hạng nhất —` : null}
+            name={result?.name}
+            accent="emerald"
+          />
         </div>
       )}
     </div>

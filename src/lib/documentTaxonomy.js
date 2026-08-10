@@ -19,6 +19,7 @@ export const DOCUMENT_TAXONOMY = {
       hdtn: { label: 'HĐTN', children: GRADES },
       lap_trinh: { label: 'Lập trình' },
       robot: { label: 'Robot' },
+      icdl: { label: 'ICDL' },
     },
   },
   hoc_tap: { label: 'Học tập' },

@@ -8,6 +8,7 @@ import ResourcesPublic from '@/pages/ResourcesPublic'
 import MediaTracker from '@/pages/MediaTracker'
 import DocumentsPublic from '@/pages/DocumentsPublic'
 import Login from '@/pages/Login'
+import ResetPassword from '@/pages/ResetPassword'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminMiniGames from '@/pages/admin/AdminMiniGames'
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/phim-game" element={<MediaTracker />} />
         <Route path="/tai-lieu" element={<DocumentsPublic />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/dat-lai-mat-khau" element={<ResetPassword />} />
       </Route>
       <Route
         path="/admin"

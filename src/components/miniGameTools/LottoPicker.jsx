@@ -3,9 +3,13 @@ import { useQuery } from '@tanstack/react-query'
 import { Dices } from 'lucide-react'
 import { fetchRosters } from '@/lib/queries/rosters'
 import { cn } from '@/lib/utils'
+import { pickRandomIndex } from '@/lib/randomPick'
+import { playWhoosh } from '@/lib/gameSound'
+import { useDrawnTracker } from '@/hooks/useDrawnTracker'
 import { Button } from '@/components/ui/button'
 import { LottoCageStand, LottoCageSphere } from '@/components/miniGameTools/LottoCageFrame'
 import RosterPicker from '@/components/miniGameTools/RosterPicker'
+import ResultReveal from '@/components/miniGameTools/ResultReveal'
 
 const BALL_BASE_COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#f43f5e', '#06b6d4']
 const CAGE_CENTER = { x: 130, y: 105 }
@@ -52,7 +56,7 @@ export default function LottoPicker() {
   }, [ballPositions, fillerPositions])
 
   const [removeAfterDraw, setRemoveAfterDraw] = useState(true)
-  const [drawn, setDrawn] = useState(new Set())
+  const { drawn, markDrawn, resetDraw: resetDrawnTracker, isDrawn } = useDrawnTracker(roster?.id)
   const [spinning, setSpinning] = useState(false)
   const [spinRound, setSpinRound] = useState(0)
   const [result, setResult] = useState(null)
@@ -68,28 +72,27 @@ export default function LottoPicker() {
 
   function selectRoster(id) {
     setRosterId(id)
-    setDrawn(new Set())
     setResult(null)
   }
 
   function resetDraw() {
-    setDrawn(new Set())
+    resetDrawnTracker()
     setResult(null)
   }
 
   function spin() {
     if (spinning || students.length === 0) return
-    const pool = students.map((_, i) => i).filter((i) => (removeAfterDraw ? !drawn.has(i) : true))
-    if (pool.length === 0) return
+    const idx = pickRandomIndex(students.length, drawn, removeAfterDraw)
+    if (idx === null) return
     setSpinning(true)
     setResult(null)
     setSpinRound((r) => r + 1)
     setLivePositions(students.map(() => randomPointInDisk(CAGE_SCATTER_RADIUS)))
     setLiveFillerPositions(Array.from({ length: fillerCount }, () => randomPointInDisk(CAGE_SCATTER_RADIUS)))
-    const idx = pool[Math.floor(Math.random() * pool.length)]
+    playWhoosh()
     setTimeout(() => {
       setResult({ index: idx, name: students[idx] })
-      if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(idx))
+      if (removeAfterDraw) markDrawn(idx)
       setSpinning(false)
     }, SPIN_DURATION_MS)
   }
@@ -142,7 +145,7 @@ export default function LottoPicker() {
               ))}
               {students.map((_, i) => {
                 if (result?.index === i) return null
-                const isDrawn = drawn.has(i)
+                const drawnAlready = isDrawn(i)
                 const pos = livePositions[i] ?? { x: 0, y: 0 }
                 return (
                   <span
@@ -150,12 +153,12 @@ export default function LottoPicker() {
                     style={{
                       transform: `translate(${CAGE_CENTER.x + pos.x}px, ${CAGE_CENTER.y + pos.y}px) translate(-50%, -50%)`,
                       willChange: 'transform',
-                      background: isDrawn ? undefined : ballGradient(BALL_BASE_COLORS[i % BALL_BASE_COLORS.length]),
+                      background: drawnAlready ? undefined : ballGradient(BALL_BASE_COLORS[i % BALL_BASE_COLORS.length]),
                     }}
                     className={cn(
                       'absolute top-0 left-0 flex shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-md shadow-black/40 transition-transform duration-150 ease-out',
                       BALL_SIZE_CLASS,
-                      isDrawn && 'bg-white/10 text-white/30'
+                      drawnAlready && 'bg-white/10 text-white/30'
                     )}
                   >
                     {i + 1}
@@ -186,19 +189,12 @@ export default function LottoPicker() {
             <Button variant="outline" onClick={resetDraw}>Reset</Button>
           </div>
 
-          {result && (
-            <div className="mx-auto flex w-fit flex-col items-center gap-2">
-              <span
-                style={{ background: ballGradient(BALL_BASE_COLORS[result.index % BALL_BASE_COLORS.length]) }}
-                className="flex size-16 shrink-0 animate-in items-center justify-center rounded-full text-xl font-bold text-white shadow-lg shadow-black/40 zoom-in-50 slide-in-from-top-10 duration-500"
-              >
-                {result.index + 1}
-              </span>
-              <span className="animate-in rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
-                {result.name}
-              </span>
-            </div>
-          )}
+          <ResultReveal
+            resultKey={result ? spinRound : null}
+            icon={result ? result.index + 1 : null}
+            name={result?.name}
+            accent="amber"
+          />
         </div>
       )}
     </div>

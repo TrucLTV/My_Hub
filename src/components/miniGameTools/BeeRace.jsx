@@ -3,10 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { PlayCircle } from 'lucide-react'
 import { fetchRosters } from '@/lib/queries/rosters'
 import { cn } from '@/lib/utils'
+import { pickRandomIndex } from '@/lib/randomPick'
+import { playWhoosh } from '@/lib/gameSound'
+import { useDrawnTracker } from '@/hooks/useDrawnTracker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import RosterPicker from '@/components/miniGameTools/RosterPicker'
+import ResultReveal from '@/components/miniGameTools/ResultReveal'
 
 const SCENE = { width: 320, height: 230 }
 const SCENE_SCALE = 3
@@ -98,7 +102,7 @@ export default function BeeRace() {
 
   const [flightSeconds, setFlightSeconds] = useState(DEFAULT_FLIGHT_SECONDS)
   const [removeAfterDraw, setRemoveAfterDraw] = useState(true)
-  const [drawn, setDrawn] = useState(new Set())
+  const { drawn, markDrawn, resetDraw: resetDrawnTracker, isDrawn } = useDrawnTracker(roster?.id)
   const [racing, setRacing] = useState(false)
   const [beePos, setBeePos] = useState([])
   const [beeDur, setBeeDur] = useState([])
@@ -109,7 +113,6 @@ export default function BeeRace() {
 
   function selectRoster(id) {
     setRosterId(id)
-    setDrawn(new Set())
     setResult(null)
     raceIdRef.current += 1
     setRacing(false)
@@ -120,7 +123,7 @@ export default function BeeRace() {
   }
 
   function resetDraw() {
-    setDrawn(new Set())
+    resetDrawnTracker()
     setResult(null)
     raceIdRef.current += 1
     setRacing(false)
@@ -144,15 +147,15 @@ export default function BeeRace() {
 
   function launch() {
     if (racing || students.length === 0) return
-    const pool = students.map((_, i) => i).filter((i) => (removeAfterDraw ? !drawn.has(i) : true))
-    if (pool.length === 0) return
+    const winnerIdx = pickRandomIndex(students.length, drawn, removeAfterDraw)
+    if (winnerIdx === null) return
 
     setResult(null)
     setRacing(true)
     raceIdRef.current += 1
     const myRaceId = raceIdRef.current
+    playWhoosh()
 
-    const winnerIdx = pool[Math.floor(Math.random() * pool.length)]
     const totalMs = flightSeconds * 1000
 
     const realDurations = students.map((_, i) => (i === winnerIdx ? totalMs : totalMs * (1.15 + Math.random() * 0.7)))
@@ -206,8 +209,8 @@ export default function BeeRace() {
     setTimeout(() => {
       if (raceIdRef.current !== myRaceId) return
       raceIdRef.current += 1 // dung tat ca con ong con lai ngay tai vi tri hien tai
-      setResult({ index: winnerIdx, name: students[winnerIdx] })
-      if (removeAfterDraw) setDrawn((prev) => new Set(prev).add(winnerIdx))
+      setResult({ index: winnerIdx, name: students[winnerIdx], raceId: myRaceId })
+      if (removeAfterDraw) markDrawn(winnerIdx)
       setRacing(false)
     }, realDurations[winnerIdx])
   }
@@ -310,7 +313,7 @@ export default function BeeRace() {
             {/* ong that, gan voi hoc sinh */}
             {students.map((_, i) => {
               const isWinner = result?.index === i
-              const isDrawn = drawn.has(i)
+              const drawnAlready = isDrawn(i)
               const pos = beePos[i] ?? restPositions[i]
               const dur = beeDur[i] ?? 0
               return (
@@ -332,11 +335,11 @@ export default function BeeRace() {
                       isWinner && 'animate-in zoom-in-50 scale-125 duration-500'
                     )}
                   >
-                    <span className={cn('text-xl leading-none', isDrawn && 'opacity-30 grayscale')}>🐝</span>
+                    <span className={cn('text-xl leading-none', drawnAlready && 'opacity-30 grayscale')}>🐝</span>
                     <span
                       className={cn(
                         'absolute flex size-3.5 items-center justify-center rounded-full text-[9px] font-bold shadow',
-                        isDrawn ? 'bg-white/30 text-white/60' : 'bg-amber-400 text-black'
+                        drawnAlready ? 'bg-white/30 text-white/60' : 'bg-amber-400 text-black'
                       )}
                     >
                       {i + 1}
@@ -355,16 +358,13 @@ export default function BeeRace() {
             <Button variant="outline" onClick={resetDraw}>Reset</Button>
           </div>
 
-          {result && (
-            <div className="mx-auto flex w-fit flex-col items-center gap-2">
-              <span className="flex size-16 shrink-0 animate-in items-center justify-center rounded-full bg-amber-400 text-2xl shadow-lg shadow-black/40 zoom-in-50 slide-in-from-top-6 duration-500">
-                🐝
-              </span>
-              <span className="animate-in rounded-xl border-t-4 border-t-orange-400 bg-card px-6 py-2 text-xl font-bold shadow-lg fade-in-0 duration-500">
-                Ong số {result.index + 1} — {result.name}
-              </span>
-            </div>
-          )}
+          <ResultReveal
+            resultKey={result ? result.raceId : null}
+            icon="🐝"
+            subtitle={result ? `Ong số ${result.index + 1} —` : null}
+            name={result?.name}
+            accent="amber"
+          />
         </div>
       )}
     </div>
