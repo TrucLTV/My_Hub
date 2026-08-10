@@ -87,9 +87,14 @@ function RecentDocuments({ documents }) {
 }
 
 const VIDEO_FILE_TYPES = ['mp4', 'webm', 'mov', 'm4v', 'ogv']
+const PREVIEWABLE_FILE_TYPES = [...VIDEO_FILE_TYPES, 'html', 'htm']
 
 function isVideoFileType(fileType) {
   return VIDEO_FILE_TYPES.includes((fileType ?? '').toLowerCase())
+}
+
+function isPreviewableFileType(fileType) {
+  return PREVIEWABLE_FILE_TYPES.includes((fileType ?? '').toLowerCase())
 }
 
 function PublicDocumentCard({ doc, onDownload, onLockedClick }) {
@@ -120,16 +125,19 @@ function PublicDocumentCard({ doc, onDownload, onLockedClick }) {
           ))}
         </div>
       )}
-      {previewUrl && (
+      {previewUrl && isVideoFileType(doc.file_type) && (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video src={previewUrl} controls className="w-full rounded-md bg-black" />
       )}
+      {previewUrl && !isVideoFileType(doc.file_type) && (
+        <iframe src={previewUrl} title={doc.title} className="h-96 w-full rounded-md border border-border bg-white" />
+      )}
       {doc.file_url && (
         <div className="flex flex-wrap gap-2">
-          {isVideoFileType(doc.file_type) && (
+          {isPreviewableFileType(doc.file_type) && (
             <Button variant="outline" size="sm" className="w-fit" onClick={togglePreview} disabled={previewLoading}>
               <Play className="size-3.5" />
-              {previewLoading ? 'Đang tải...' : previewUrl ? 'Ẩn video' : 'Xem trước'}
+              {previewLoading ? 'Đang tải...' : previewUrl ? 'Ẩn xem trước' : 'Xem trước'}
             </Button>
           )}
           <Button
