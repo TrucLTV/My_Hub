@@ -5,7 +5,7 @@ import Layout from '@/components/Layout'
 import Home from '@/pages/Home'
 import MiniGamesPublic from '@/pages/MiniGamesPublic'
 import ResourcesPublic from '@/pages/ResourcesPublic'
-import MediaTracker from '@/pages/MediaTracker'
+import Entertainment from '@/pages/Entertainment'
 import DocumentsPublic from '@/pages/DocumentsPublic'
 import Login from '@/pages/Login'
 import ResetPassword from '@/pages/ResetPassword'
@@ -13,7 +13,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminMiniGames from '@/pages/admin/AdminMiniGames'
 import AdminResources from '@/pages/admin/AdminResources'
-import AdminMedia from '@/pages/admin/AdminMedia'
+import AdminEntertainment from '@/pages/admin/AdminEntertainment'
 import AdminDocuments from '@/pages/admin/AdminDocuments'
 import AdminSettings from '@/pages/admin/AdminSettings'
 
@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/mini-game" element={<MiniGamesPublic />} />
         <Route path="/tai-nguyen" element={<ResourcesPublic />} />
-        <Route path="/phim-game" element={<MediaTracker />} />
+        <Route path="/giai-tri" element={<Entertainment />} />
         <Route path="/tai-lieu" element={<DocumentsPublic />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dat-lai-mat-khau" element={<ResetPassword />} />
@@ -45,7 +45,7 @@ export default function App() {
       >
         <Route path="mini-game" element={<AdminMiniGames />} />
         <Route path="tai-nguyen" element={<AdminResources />} />
-        <Route path="phim-game" element={<AdminMedia />} />
+        <Route path="giai-tri" element={<AdminEntertainment />} />
         <Route path="tai-lieu" element={<AdminDocuments />} />
         <Route path="cai-dat" element={<AdminSettings />} />
       </Route>

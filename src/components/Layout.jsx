@@ -22,7 +22,7 @@ export default function Layout() {
             <Link to="/tai-lieu" className={navTabClass}>Tài liệu</Link>
             <Link to="/mini-game" className={navTabClass}>Mini game</Link>
             <Link to="/tai-nguyen" className={navTabClass}>Ngân hàng câu hỏi</Link>
-            <Link to="/phim-game" className={navTabClass}>Giải trí</Link>
+            <Link to="/giai-tri" className={navTabClass}>Giải trí</Link>
             <a
               href={CPP_EDU_HUB_URL}
               target="_blank"
