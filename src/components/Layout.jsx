@@ -9,7 +9,7 @@ const navTabClass =
 
 export default function Layout() {
   return (
-    <div className="min-h-svh flex flex-col overflow-x-hidden">
+    <div className="min-h-svh flex flex-col overflow-x-clip">
       <header className="bg-blue-950 border-b border-white/10">
         <nav className="max-w-[1600px] mx-auto flex items-center justify-between gap-4 p-3">
           <Link to="/" className="flex shrink-0 items-center gap-2 px-1">
