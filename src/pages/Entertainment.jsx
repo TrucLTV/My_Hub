@@ -74,19 +74,21 @@ function Library({ onOpenCategory }) {
   )
 }
 
-// Nhiều file .md tự đánh số tiêu đề kiểu "Bài 1: ...", nhưng số thứ tự đã hiện
-// riêng qua nhãn "Phần N" — lược bỏ tiền tố này ở dòng tiêu đề đầu tiên khi
-// hiển thị (chỉ ảnh hưởng cách render, không đổi nội dung .md gốc đã lưu).
+// Nhiều file .md tự đánh số các heading kiểu "Bài 1: ...", "Phần 2 — ...", trong
+// khi số thứ tự đã hiện riêng qua nhãn "Phần N" của khung mục lục — lược bỏ
+// tiền tố này ở mọi heading khi hiển thị (không đổi nội dung .md gốc đã lưu).
 function stripChapterLabel(markdown) {
   if (!markdown) return markdown
-  const lines = markdown.split('\n')
-  const match = (lines[0] ?? '').match(/^(#{1,6}\s*)(.*)$/)
-  if (!match) return markdown
-  const [, hashes, rest] = match
-  const stripped = rest.replace(/^(bài|bai)\s*\d+\s*[:\-–]?\s*/i, '')
-  if (stripped === rest) return markdown
-  lines[0] = `${hashes}${stripped}`
-  return lines.join('\n')
+  return markdown
+    .split('\n')
+    .map((line) => {
+      const match = line.match(/^(#{1,6}\s*)(.*)$/)
+      if (!match) return line
+      const [, hashes, rest] = match
+      const stripped = rest.replace(/^(bài|bai|phần|phan)\s*\d+\s*[:\-–—]?\s*/i, '')
+      return stripped === rest ? line : `${hashes}${stripped}`
+    })
+    .join('\n')
 }
 
 function ChapterSection({ index, item, revealed, onLockedClick }) {
