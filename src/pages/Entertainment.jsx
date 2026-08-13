@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PasswordPrompt from '@/components/PasswordPrompt'
-import BambooRail from '@/components/entertainment/BambooRail'
+import { BAMBOO_TILE_URL, BAMBOO_TILE_SIZE } from '@/lib/bambooTile'
 
 // "Phòng đọc" của trang Giải trí dùng 1 bảng màu giấy/ebook cố định, tách biệt
 // khỏi theme xanh-navy tối của phần còn lại trong MyHub — không đổi theo dark/light toggle.
@@ -215,12 +215,12 @@ function ReadingRoom({ category, allItems, onBack }) {
   const Icon = category.icon
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <div className="mx-auto max-w-6xl px-4 py-8">
       <button onClick={onBack} className={cn('mb-6 inline-flex items-center gap-1 text-sm hover:underline', inkMuted)}>
         <ArrowLeft className="size-3.5" /> Quay lại Giải trí
       </button>
 
-      <div className="grid gap-6 lg:grid-cols-[240px_84px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[200px_240px_1fr]">
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <div className="flex items-center gap-2">
             <span className={cn('flex size-8 items-center justify-center rounded-md', sageBadge)}>
@@ -272,11 +272,19 @@ function ReadingRoom({ category, allItems, onBack }) {
           )}
         </aside>
 
-        {/* Cột bụi tre — neo theo màn hình khi cuộn, chiều cao giới hạn theo viewport
-            (không kéo giãn theo chiều cao bài viết, tránh biến dạng khi bài dài) */}
-        <div className="relative hidden lg:sticky lg:top-4 lg:block lg:h-[calc(100vh-2rem)] lg:self-start">
-          <BambooRail className="pointer-events-none absolute inset-0 h-full w-full text-[#8fa389] opacity-70" />
-        </div>
+        {/* Cột bụi tre — ảnh nền lặp lại cả 2 chiều, cuộn theo trang bình thường
+            (không sticky). Lặp ô đúng kích thước gốc nên không bao giờ méo hình,
+            nội dung càng dài thì tre càng "mọc" thêm xuống dưới. */}
+        <div
+          className="hidden lg:block"
+          style={{
+            backgroundImage: `url("${BAMBOO_TILE_URL}")`,
+            backgroundRepeat: 'repeat',
+            backgroundSize: BAMBOO_TILE_SIZE,
+            opacity: 0.7,
+          }}
+          aria-hidden="true"
+        />
 
         <main className="relative min-w-0">
           {tab === 'article' ? (
