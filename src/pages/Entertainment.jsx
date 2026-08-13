@@ -279,7 +279,7 @@ function ReadingRoom({ category, allItems, onBack }) {
             src={BAMBOO_TILE_URL}
             alt=""
             aria-hidden="true"
-            className="h-full w-full object-cover opacity-70"
+            className="h-full w-full object-contain object-top opacity-70"
           />
         </div>
 
