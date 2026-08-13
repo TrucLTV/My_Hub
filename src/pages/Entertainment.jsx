@@ -73,15 +73,10 @@ function Library({ onOpenCategory }) {
   )
 }
 
-function ChapterSection({ index, item, revealed, onLockedClick, registerRef }) {
+function ChapterSection({ index, item, revealed, onLockedClick }) {
   const body = revealed[item.id]?.body ?? (!item.is_locked ? item.body : null)
   return (
-    <section
-      id={`chapter-${item.id}`}
-      data-id={item.id}
-      ref={(el) => registerRef(item.id, el)}
-      className="scroll-mt-24 border-t border-[#ddd6c2] pt-8 first:border-t-0 first:pt-0"
-    >
+    <section id={`chapter-${item.id}`}>
       <div className="flex items-center gap-3">
         <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-sm font-bold', sageBadge)}>
           {index}
@@ -186,35 +181,24 @@ function ReadingRoom({ category, allItems, onBack }) {
   const articles = categoryItems.filter((i) => i.content_type === 'article').slice().reverse()
   const mediaItems = categoryItems.filter((i) => i.content_type === 'media')
 
-  const [activeId, setActiveId] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
   const [lockedItem, setLockedItem] = useState(null)
   const [revealed, setRevealed] = useState({})
-  const sectionRefs = useRef(new Map())
+  const contentTopRef = useRef(null)
 
-  function registerRef(id, el) {
-    if (el) sectionRefs.current.set(id, el)
-    else sectionRefs.current.delete(id)
-  }
+  const selectedIndex = articles.findIndex((a) => a.id === selectedId)
+  const selectedArticle = selectedIndex >= 0 ? articles[selectedIndex] : null
 
+  // Nhiều bài viết → chỉ hiện đúng 1 bài đang chọn, không dồn tất cả vào 1 trang dài.
   useEffect(() => {
     if (tab !== 'article' || !articles.length) return
-    if (!activeId || !articles.some((a) => a.id === activeId)) setActiveId(articles[0].id)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible[0]) setActiveId(visible[0].target.dataset.id)
-      },
-      { rootMargin: '-15% 0px -70% 0px', threshold: 0 }
-    )
-    sectionRefs.current.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
+    if (!selectedId || !articles.some((a) => a.id === selectedId)) setSelectedId(articles[0].id)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, articles.map((a) => a.id).join(',')])
 
-  function scrollToChapter(id) {
-    sectionRefs.current.get(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  function selectArticle(id) {
+    setSelectedId(id)
+    contentTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   function setTab(next) {
@@ -231,7 +215,7 @@ function ReadingRoom({ category, allItems, onBack }) {
   const Icon = category.icon
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <button onClick={onBack} className={cn('mb-6 inline-flex items-center gap-1 text-sm hover:underline', inkMuted)}>
         <ArrowLeft className="size-3.5" /> Quay lại Giải trí
       </button>
@@ -273,10 +257,10 @@ function ReadingRoom({ category, allItems, onBack }) {
                 {articles.map((a, i) => (
                   <button
                     key={a.id}
-                    onClick={() => scrollToChapter(a.id)}
+                    onClick={() => selectArticle(a.id)}
                     className={cn(
                       'flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-                      activeId === a.id ? cn('font-medium', sageBadge) : cn('hover:bg-[#f0ede1]', ink)
+                      selectedId === a.id ? cn('font-medium', sageBadge) : cn('hover:bg-[#f0ede1]', ink)
                     )}
                   >
                     <span className={cn('shrink-0 text-xs tabular-nums', inkMuted)}>{i + 1}</span>
@@ -288,8 +272,9 @@ function ReadingRoom({ category, allItems, onBack }) {
           )}
         </aside>
 
-        {/* Cột bụi tre — chạy suốt chiều cao khu đọc, giữa mục lục và nội dung */}
-        <div className="relative hidden lg:block">
+        {/* Cột bụi tre — neo theo màn hình khi cuộn, chiều cao giới hạn theo viewport
+            (không kéo giãn theo chiều cao bài viết, tránh biến dạng khi bài dài) */}
+        <div className="relative hidden lg:sticky lg:top-4 lg:block lg:h-[calc(100vh-2rem)] lg:self-start">
           <BambooRail className="pointer-events-none absolute inset-0 h-full w-full text-[#8fa389] opacity-70" />
         </div>
 
@@ -302,18 +287,17 @@ function ReadingRoom({ category, allItems, onBack }) {
                 <p className={cn('mt-4 font-serif text-lg italic', inkMuted)}>{category.subtitle}</p>
                 <p className={cn('mt-4 leading-relaxed', inkMuted)}>{category.intro}</p>
               </div>
-              <div className="relative mt-10 max-w-2xl space-y-8">
+              <div ref={contentTopRef} className="relative mt-10 max-w-2xl scroll-mt-24">
                 {!articles.length && <p className={inkMuted}>Chưa có bài viết nào.</p>}
-                {articles.map((item, i) => (
+                {selectedArticle && (
                   <ChapterSection
-                    key={item.id}
-                    index={i + 1}
-                    item={item}
+                    key={selectedArticle.id}
+                    index={selectedIndex + 1}
+                    item={selectedArticle}
                     revealed={revealed}
                     onLockedClick={setLockedItem}
-                    registerRef={registerRef}
                   />
-                ))}
+                )}
               </div>
             </>
           ) : (
