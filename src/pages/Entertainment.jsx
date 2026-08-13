@@ -82,10 +82,7 @@ function ChapterSection({ index, item, revealed, onLockedClick }) {
         <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-full font-serif text-sm font-bold', sageBadge)}>
           {index}
         </span>
-        <div className="min-w-0">
-          <p className={cn('text-xs font-semibold uppercase tracking-[0.15em]', eyebrow)}>Phần {index}</p>
-          <h2 className={cn('font-serif text-2xl font-bold', ink)}>{item.title}</h2>
-        </div>
+        <p className={cn('text-xs font-semibold uppercase tracking-[0.15em]', eyebrow)}>Phần {index}</p>
       </div>
       {item.description && <p className={cn('mt-2 font-serif italic', inkMuted)}>{item.description}</p>}
       {item.tags?.length > 0 && (
@@ -101,7 +98,7 @@ function ChapterSection({ index, item, revealed, onLockedClick }) {
         </Button>
       )}
       {body && (
-        <div className="prose prose-sm sm:prose-base mt-4 max-w-none font-serif prose-headings:font-serif prose-headings:text-[#33362d] prose-p:text-[#3a3d33] prose-strong:text-[#242620] prose-a:text-[#3f6146] prose-th:text-[#33362d] [&_table]:border-collapse [&_th]:border-2 [&_td]:border-2 [&_th]:border-[#9c7a3f] [&_td]:border-[#9c7a3f]">
+        <div className="prose prose-sm sm:prose-base mt-4 max-w-none font-serif prose-headings:font-serif prose-headings:text-[#33362d] prose-p:text-[#3a3d33] prose-strong:text-[#242620] prose-a:text-[#3f6146] prose-th:text-[#33362d] [&_table]:border-collapse [&_th]:border-2 [&_td]:border-2 [&_th]:border-[#9c7a3f] [&_td]:border-[#9c7a3f] [&_th]:text-center [&_td]:text-center [&_th]:align-middle [&_td]:align-middle">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       )}
