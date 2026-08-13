@@ -101,6 +101,14 @@ export default function AdminEntertainment() {
     setOpen(true)
   }
 
+  function handleBodyFile(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setForm((prev) => ({ ...prev, body: String(reader.result ?? '') }))
+    reader.readAsText(file)
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     let mediaUrl = form.media_url
@@ -203,8 +211,17 @@ export default function AdminEntertainment() {
 
               {form.content_type === 'article' && (
                 <div className="space-y-1">
-                  <Label htmlFor="body">Nội dung (markdown)</Label>
-                  <Textarea id="body" rows={10} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} />
+                  <Label htmlFor="body_file">Nội dung (tải file .md)</Label>
+                  <Input id="body_file" type="file" accept=".md,.markdown,text/markdown" onChange={handleBodyFile} />
+                  {form.body && (
+                    <Textarea
+                      rows={10}
+                      className="mt-1"
+                      value={form.body}
+                      onChange={(e) => setForm({ ...form, body: e.target.value })}
+                      placeholder="Nội dung đọc được từ file .md — có thể chỉnh sửa trực tiếp ở đây"
+                    />
+                  )}
                 </div>
               )}
 
