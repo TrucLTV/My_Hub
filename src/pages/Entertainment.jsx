@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PasswordPrompt from '@/components/PasswordPrompt'
-import { BAMBOO_TILE_URL, BAMBOO_TILE_SIZE } from '@/lib/bambooTile'
+import { BAMBOO_TILE_URL } from '@/lib/bambooTile'
 
 // "Phòng đọc" của trang Giải trí dùng 1 bảng màu giấy/ebook cố định, tách biệt
 // khỏi theme xanh-navy tối của phần còn lại trong MyHub — không đổi theo dark/light toggle.
@@ -272,19 +272,16 @@ function ReadingRoom({ category, allItems, onBack }) {
           )}
         </aside>
 
-        {/* Cột bụi tre — ảnh nền lặp lại cả 2 chiều, cuộn theo trang bình thường
-            (không sticky). Lặp ô đúng kích thước gốc nên không bao giờ méo hình,
-            nội dung càng dài thì tre càng "mọc" thêm xuống dưới. */}
-        <div
-          className="hidden lg:block"
-          style={{
-            backgroundImage: `url("${BAMBOO_TILE_URL}")`,
-            backgroundRepeat: 'repeat',
-            backgroundSize: BAMBOO_TILE_SIZE,
-            opacity: 0.7,
-          }}
-          aria-hidden="true"
-        />
+        {/* Cột bụi tre — chỉ 1 cụm duy nhất, neo cố định theo màn hình khi cuộn
+            văn bản (sticky, không lặp/không kéo giãn nên không bị méo hình). */}
+        <div className="hidden lg:sticky lg:top-4 lg:block lg:h-[calc(100vh-2rem)] lg:self-start">
+          <img
+            src={BAMBOO_TILE_URL}
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover opacity-70"
+          />
+        </div>
 
         <main className="relative min-w-0">
           {tab === 'article' ? (
