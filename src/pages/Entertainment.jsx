@@ -272,15 +272,10 @@ function ReadingRoom({ category, allItems, onBack }) {
           )}
         </aside>
 
-        {/* Cột bụi tre — chỉ 1 cụm duy nhất, neo cố định theo màn hình khi cuộn
-            văn bản (sticky, không lặp/không kéo giãn nên không bị méo hình). */}
-        <div className="hidden lg:sticky lg:top-4 lg:block lg:h-[calc(100vh-2rem)] lg:self-start">
-          <img
-            src={BAMBOO_TILE_URL}
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-contain object-top opacity-70"
-          />
+        {/* Cột bụi tre — chỉ 1 cụm duy nhất, đúng kích thước gốc (không kéo
+            giãn/co lại theo khung), neo cố định theo màn hình khi cuộn văn bản. */}
+        <div className="hidden lg:sticky lg:top-4 lg:block lg:self-start">
+          <img src={BAMBOO_TILE_URL} alt="" aria-hidden="true" className="opacity-70" />
         </div>
 
         <main className="relative min-w-0">

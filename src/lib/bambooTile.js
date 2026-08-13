@@ -2,7 +2,7 @@
 // nhất bị kéo giãn méo khi vùng chứa cao bất định. Trình duyệt tự lặp theo cả
 // chiều dọc lẫn ngang — nội dung càng dài, tre càng "mọc" thêm mà không biến
 // dạng, và ảnh nền cuộn theo trang bình thường (không sticky/fixed).
-const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 900">
+const svgMarkup = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="900" viewBox="0 0 120 900">
   <defs>
     <path id="bambooLeaf" d="M0 0Q-26-11-50-52Q-19-28 0 0Z" />
     <g id="bambooGround">
