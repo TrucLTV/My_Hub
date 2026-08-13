@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import SearchBar from '@/components/SearchBar'
 import TagFilter from '@/components/TagFilter'
 import PasswordPrompt from '@/components/PasswordPrompt'
-import EbookOrnament from '@/components/entertainment/EbookOrnament'
+import BambooRail from '@/components/entertainment/BambooRail'
 
 // "Phòng đọc" của trang Giải trí dùng 1 bảng màu giấy/ebook cố định, tách biệt
 // khỏi theme xanh-navy tối của phần còn lại trong MyHub — không đổi theo dark/light toggle.
@@ -22,6 +22,13 @@ const inkMuted = 'text-[#767a68]'
 const eyebrow = 'text-[#9c7a3f]'
 const panel = 'border-[#ddd6c2] bg-[#f8f6ee]'
 const sageBadge = 'bg-[#dbe6d9] text-[#3f6146]'
+// Nền giấy có lưới chấm mờ, dùng chung cho toàn trang (thư viện lẫn phòng đọc)
+// để cả trang là 1 mặt nền liền mạch thay vì từng mảng màu rời rạc.
+const paperBg = {
+  backgroundColor: '#eeece0',
+  backgroundImage: 'radial-gradient(rgba(51,54,45,0.09) 1px, transparent 1.4px)',
+  backgroundSize: '22px 22px',
+}
 
 function LibraryCard({ category, onOpen }) {
   const Icon = category.icon
@@ -229,7 +236,7 @@ function ReadingRoom({ category, allItems, onBack }) {
         <ArrowLeft className="size-3.5" /> Quay lại Giải trí
       </button>
 
-      <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[240px_84px_1fr]">
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
           <div className="flex items-center gap-2">
             <span className={cn('flex size-8 items-center justify-center rounded-md', sageBadge)}>
@@ -281,10 +288,14 @@ function ReadingRoom({ category, allItems, onBack }) {
           )}
         </aside>
 
+        {/* Cột bụi tre — chạy suốt chiều cao khu đọc, giữa mục lục và nội dung */}
+        <div className="relative hidden lg:block">
+          <BambooRail className="pointer-events-none absolute inset-0 h-full w-full text-[#8fa389] opacity-70" />
+        </div>
+
         <main className="relative min-w-0">
           {tab === 'article' ? (
             <>
-              <EbookOrnament className="pointer-events-none absolute -top-6 right-0 hidden h-64 w-56 text-[#8fa389] opacity-70 sm:block" />
               <div className="relative max-w-2xl">
                 <p className={cn('text-xs font-semibold uppercase tracking-[0.2em]', eyebrow)}>Ebook</p>
                 <h1 className={cn('mt-2 font-serif text-4xl leading-tight font-bold sm:text-5xl', ink)}>{category.label}</h1>
@@ -340,7 +351,7 @@ export default function Entertainment() {
   }
 
   return (
-    <div className="-mt-4 min-h-[70vh] w-screen mx-[calc(50%-50vw)] bg-[#eeece0]">
+    <div className="-mt-4 min-h-[70vh] w-screen mx-[calc(50%-50vw)]" style={paperBg}>
       {!category && <Library onOpenCategory={openCategory} />}
       {category && error && <p className="px-4 py-10 text-center text-destructive">Lỗi: {error.message}</p>}
       {category && !error && isLoading && <p className={cn('px-4 py-10 text-center', inkMuted)}>Đang tải...</p>}
