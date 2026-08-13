@@ -101,7 +101,7 @@ function ChapterSection({ index, item, revealed, onLockedClick }) {
         </Button>
       )}
       {body && (
-        <div className="prose prose-sm sm:prose-base mt-4 max-w-none font-serif prose-headings:font-serif prose-headings:text-[#33362d] prose-p:text-[#3a3d33] prose-strong:text-[#242620] prose-a:text-[#3f6146] prose-th:text-[#33362d] prose-td:border-[#ddd6c2] prose-th:border-[#ddd6c2] prose-tr:border-[#ddd6c2]">
+        <div className="prose prose-sm sm:prose-base mt-4 max-w-none font-serif prose-headings:font-serif prose-headings:text-[#33362d] prose-p:text-[#3a3d33] prose-strong:text-[#242620] prose-a:text-[#3f6146] prose-th:text-[#33362d] [&_table]:border-collapse [&_th]:border-2 [&_td]:border-2 [&_th]:border-[#9c7a3f] [&_td]:border-[#9c7a3f]">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       )}
