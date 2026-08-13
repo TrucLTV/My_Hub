@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { ArrowLeft, BookOpen, Clapperboard, Lock, ExternalLink } from 'lucide-react'
 import { fetchPublicEntertainment, unlockEntertainmentContent } from '@/lib/queries/entertainment'
 import { ENTERTAINMENT_CATEGORIES, getCategory } from '@/lib/entertainmentTaxonomy'
@@ -100,8 +101,8 @@ function ChapterSection({ index, item, revealed, onLockedClick }) {
         </Button>
       )}
       {body && (
-        <div className="prose prose-sm sm:prose-base mt-4 max-w-none font-serif prose-headings:font-serif prose-headings:text-[#33362d] prose-p:text-[#3a3d33] prose-strong:text-[#242620] prose-a:text-[#3f6146]">
-          <ReactMarkdown>{body}</ReactMarkdown>
+        <div className="prose prose-sm sm:prose-base mt-4 max-w-none font-serif prose-headings:font-serif prose-headings:text-[#33362d] prose-p:text-[#3a3d33] prose-strong:text-[#242620] prose-a:text-[#3f6146] prose-th:text-[#33362d] prose-td:border-[#ddd6c2] prose-th:border-[#ddd6c2] prose-tr:border-[#ddd6c2]">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
         </div>
       )}
     </section>
